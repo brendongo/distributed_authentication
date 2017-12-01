@@ -1,0 +1,16 @@
+Docker Dev Instructions:
+-------------------------
+
+Build Image:
+cd docker
+./build_container.sh
+
+Run Container:
+Has to be run from distributed_authentication folder
+./docker/start_container.sh &
+
+Connect to Last Container:
+./docker/connect_container.sh
+
+Kill All Containers:
+./docker/kill_containers.sh
