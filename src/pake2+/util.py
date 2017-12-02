@@ -1,6 +1,6 @@
 from __future__ import division
 import os, binascii, math
-from . import six
+import six
 
 def size_bits(maxval):
     if hasattr(maxval, "bit_length"): # python-2.7 or 3.x
