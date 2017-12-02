@@ -6,10 +6,21 @@ class WriteAheadLog(object):
         """
         pass
 
-    def log(self, entry):
-        """Append entry to log
+    def log(self, msg):
+        """Append message to log
 
         Args:
-            entry (string)
+            msg (Message)
         """
+        pass
+
+    def truncate(self):
+        """Runs periodically in the background. Deletes any completed
+        transactions.
+        """
+        pass
+
+    @property
+    def messages(self):
+        """Yields messages in the log."""
         pass
