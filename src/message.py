@@ -204,8 +204,77 @@ class PutAcceptMessage(Message):
         pass
 
 
-class CatchUpRequestMessage(Message):
-    def __init__(self, timestamps,
-        """
+class PutCompleteMessage(Message):
+    def __init__(self, sender_id, signature_service):
+        """Send this when you receive 2f + 1 PutAcceptMessages
+
         Args:
-            timestamps: ({client_id: timestamp})
+            sender_id (int)
+            signature_service (SignatureService)
+        """
+        pass
+
+    @property
+    def sender_id(self):
+        pass
+
+    def validate(self, signature_service):
+        pass
+
+    def to_json(self):
+        pass
+
+
+class CatchUpRequestMessage(Message):
+    def __init__(self, timestamps, sender_id, signature_service):
+        """Send this when you reboot and need to learn about new puts that you
+        didn't receive.
+
+        Args:
+            timestamps ({client_id: timestamp}): the latest timestamps per
+                client that you know already know about
+            sender_id (int)
+            signature_service (SignatureService)
+        """
+        pass
+
+    @property
+    def sender_id(self):
+        pass
+
+    @property
+    def timestamps(self):
+        pass
+
+    def validate(self, signature_service):
+        pass
+
+    def to_json(self):
+        pass
+
+
+class CatchUpResponseMessage(Message):
+    def __init__(self, entries, sender_id, signature_service):
+        """Responds to CatchUpRequestMessages with entries.
+
+        Args:
+            entries (list[Entry]): has user, encrypted secret, client_id,
+                timestamp
+            sender_id (int)
+            signature_service (SignatureService)
+        """
+        pass
+
+    @property
+    def sender_id(self):
+        pass
+
+    @property
+    def entries(self):
+        pass
+
+    def validate(self, signature_service):
+        pass
+
+    def to_json(self):
+        pass
