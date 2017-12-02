@@ -114,6 +114,7 @@ class MessagingService(asyncore.dispatcher):
     def handle_error(self, typ, value, traceback):
         print traceback
 
+
 class Socket(asyncore.dispatcher_with_send):
     """Two-way connection between server and client / server
     
@@ -163,7 +164,8 @@ if __name__ == "__main__":
             self.hostname = 'localhost'
 
     PORTS = [8001, 8002, 8003]
-    ADDRESSES = [Address(port - 8000, port, 'localhost', True) for port in PORTS]
+    ADDRESSES = [Address(port - 8000, port, 'localhost', True) for
+                 port in PORTS]
     parser = argparse.ArgumentParser()
     parser.add_argument("port_index", type=int)
     args = parser.parse_args()
