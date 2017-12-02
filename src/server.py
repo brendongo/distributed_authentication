@@ -22,7 +22,7 @@ class Server(object):
         pass
 
     @property
-    def host(self):
+    def hostname(self):
         pass
 
     @property
