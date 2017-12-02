@@ -1,5 +1,5 @@
-from . import ed25519_basic
-from .groups import password_to_scalar
+import ed25519_basic
+from groups import password_to_scalar, password_to_secret
 
 class _Ed25519Group:
     def random_scalar(self, entropy_f):
@@ -10,6 +10,8 @@ class _Ed25519Group:
         return ed25519_basic.bytes_to_scalar(b)
     def password_to_scalar(self, pw):
         return password_to_scalar(pw, self.scalar_size_bytes, self.order())
+    def password_to_secret(self, pw):
+        return password_to_secret(pw, self.scalar_size_bytes, self.order())
     def arbitrary_element(self, seed):
         return ed25519_basic.arbitrary_element(seed)
     def bytes_to_element(self, b):

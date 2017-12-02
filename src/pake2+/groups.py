@@ -1,8 +1,9 @@
 from __future__ import division
 import hashlib
+import sha3
 from hkdf import Hkdf
-from .six import integer_types
-from .util import (size_bits, size_bytes, unbiased_randrange,
+from six import integer_types
+from util import (size_bits, size_bytes, unbiased_randrange,
                    bytes_to_number, number_to_bytes)
 
 """Interface specification for a Group.
@@ -61,7 +62,6 @@ use os.urandom is for deterministic unit tests.
     # equality tests work: e1 == e2, e1 != e2
 """
 
-
 def expand_password(data, num_bytes):
     h = Hkdf(salt=b"", input_key_material=data, hash=hashlib.sha256)
     info = b"SPAKE2 pw"
@@ -75,6 +75,20 @@ def password_to_scalar(pw, scalar_size_bytes, q):
     assert len(oversized) >= scalar_size_bytes
     i = bytes_to_number(oversized)
     return i % q
+
+# PAKE 2+ CODE
+def expand_password_sha3(data, num_bytes):
+    h = Hkdf(salt=b"", input_key_material=data, hash=hashlib.sha3_256)
+    info = b"SPAKE2PLUS pw"
+    return h.expand(info, num_bytes)
+
+def password_to_secret(pw, scalar_size_bytes, q):
+    assert isinstance(pw, bytes)
+    oversized = expand_password_sha3(pw, 2 * (scalar_size_bytes+16))
+    assert len(oversized) >= 2 * scalar_size_bytes
+    pi_0 = bytes_to_number(oversized[:(scalar_size_bytes + 16)])
+    pi_1 = bytes_to_number(oversized[(scalar_size_bytes+16):])
+    return (pi_0 % q, pi_1 % q)
 
 def expand_arbitrary_element_seed(data, num_bytes):
     h = Hkdf(salt=b"", input_key_material=data, hash=hashlib.sha256)
@@ -135,7 +149,6 @@ class IntegerGroup:
 
     def password_to_scalar(self, pw):
         return password_to_scalar(pw, self.scalar_size_bytes, self.q)
-
 
     def arbitrary_element(self, seed):
         # we do *not* know the discrete log of this one. Nobody should.

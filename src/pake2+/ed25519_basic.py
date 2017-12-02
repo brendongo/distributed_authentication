@@ -1,5 +1,5 @@
 import binascii, hashlib, itertools
-from .groups import expand_arbitrary_element_seed
+from groups import expand_arbitrary_element_seed
 
 Q = 2**255 - 19
 L = 2**252 + 27742317777372353535851937790883648493
