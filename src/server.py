@@ -8,16 +8,7 @@ class Server(object):
         """
         pass
 
-    def get_state_machine(self, msg):
-        """Returns the state machine associated with this msg, if it exists.
-        Otherwise it creates a StateMachine and returns it.
-
-        Args:
-            msg (Message)
-
-        Returns:
-            StateMachine | None: None if msg's timestamp is too old
-        """
+    def handle_message(self, msg):
         pass
 
     @property
@@ -55,3 +46,13 @@ class Server(object):
     @property
     def catchup_state_machine(self):
         pass
+
+    @property
+    def f(self):
+        pass
+
+    @property
+    def N(self):
+        pass
+
+

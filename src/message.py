@@ -8,11 +8,11 @@ class Message(object):
     @abc.abstractmethod
     def verify_signatures(self, signature_service):
         """Validates all of the necessary signatures.
-        
+
         Args:
             signature_service (SignatureService): contains all keys for the
             client and servers
-            
+
         Returns:
             bool
         """
@@ -65,7 +65,9 @@ class GetMessage(Message):
             client_id (int)
             signature_service (SignatureService)
         """
-        pass
+        self._key = key
+        self._client_id = client_id
+        # TODO sign, timestamp
 
     @property
     def timestamp(self):
@@ -73,11 +75,11 @@ class GetMessage(Message):
 
     @property
     def key(self):
-        pass
+        return self._key
 
     @property
     def client_id(self):
-        pass
+        return self._client_id
 
     def verify_signatures(self, signature_service):
         pass
@@ -96,27 +98,30 @@ class DecryptionShareMessage(Message):
             get_message (GetMessage)
             signature_service (SignatureService)
         """
-        pass
+        self._decryption_share = decryption_share
+        self._sender_id = sender_id
+        self._get_message = get_message
+        # TODO sign
 
     @property
     def decryption_share(self):
-        pass
+        return self._decryption_share
 
     @property
     def client_id(self):
-        pass
+        return self._get_message.client_id
 
     @property
     def key(self):
-        pass
+        return self._get_message.key
 
     @property
     def timestamp(self):
-        pass
+        return self._get_message.timestamp
 
     @property
     def sender_id(self):
-        pass
+        return self._sender_id
 
     def verify_signatures(self, signature_service):
         pass
@@ -190,7 +195,7 @@ class PutMessage(Message):
 class PutAcceptMessage(Message):
     def __init__(self, put_message, sender_id, signature_service):
         """Servers broadcast this to each other on accepting a PutMessage.
-        
+
         Args:
             put_message (PutMessage)
             sender_id (int)
