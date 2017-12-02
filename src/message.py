@@ -44,7 +44,11 @@ class IntroMessage(Message):
         self._id = uuid
 
     def to_json(self):
-        return json.dumps({type: "INTRO", id: self._id})
+        return json.dumps({"type": "INTRO", "id": self._id})
+
+    @property
+    def id(self):
+        return self._id
 
     @classmethod
     def from_json(cls, json_str):
