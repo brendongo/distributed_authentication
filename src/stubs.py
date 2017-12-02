@@ -55,7 +55,7 @@ class StubSignatureService(object):
 class StubThresholdEncryptionService():
     def encrypt(self, msg):
         """Takes a message and returns something."""
-        pass
+        return msg
 
     def decrypt(self, decryption_shares):
         """Takes decryption_shares and turns it into a message.
@@ -66,15 +66,17 @@ class StubThresholdEncryptionService():
         Returns:
             TODO
         """
-        return "asfd"
+        print "Threshold Decrypted ", decryption_shares
+        return decryption_shares[0]
 
 
 class StubSecretsDb():
     def get(self, key):
-        print "Get ", key
+        print "DB Get ", key
+        return "pasword1234"
 
     def put(self, key, val):
-        print "Put ", key, ":", val
+        print "DB Put ", key, ":", val
 
 
 class StubMessagingService():

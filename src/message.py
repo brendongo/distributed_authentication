@@ -140,15 +140,17 @@ class ResponseMessage(Message):
             sender_id (int)
             signature_service (SignatureService)
         """
-        pass
+        self._secret = secret
+        self._sender_id = sender_id
+        # TODO sign timestamp
 
     @property
     def secret(self):
-        pass
+        return self._secret
 
     @property
     def sender_id(self):
-        pass
+        return self._sender_id
 
     def verify_signatures(self, signature_service):
         pass
@@ -167,11 +169,14 @@ class PutMessage(Message):
             client_id (int)
             signature_service (SignatureService)
         """
-        pass
+        self._key = key
+        self._secret = secret
+        self._client_id = client_id
+        # TODO sign timestampe
 
     @property
     def secret(self):
-        pass
+        return self._secret
 
     @property
     def timestamp(self):
@@ -179,11 +184,11 @@ class PutMessage(Message):
 
     @property
     def key(self):
-        pass
+        return self._key
 
     @property
     def client_id(self):
-        pass
+        return self._client_id
 
     def verify_signatures(self, signature_service):
         pass
@@ -201,11 +206,13 @@ class PutAcceptMessage(Message):
             sender_id (int)
             signature_service (SignatureService)
         """
-        pass
+        self._put_message = put_message
+        self._sender_id = sender_id
+        # TODO sign
 
     @property
     def secret(self):
-        pass
+        return self._put_message.secret
 
     @property
     def timestamp(self):
@@ -213,15 +220,15 @@ class PutAcceptMessage(Message):
 
     @property
     def key(self):
-        pass
+        return self._put_message.key
 
     @property
     def client_id(self):
-        pass
+        return self._put_message.client_id
 
     @property
     def sender_id(self):
-        pass
+        return self._sender_id
 
     def verify_signatures(self, signature_service):
         pass
@@ -238,11 +245,12 @@ class PutCompleteMessage(Message):
             sender_id (int)
             signature_service (SignatureService)
         """
-        pass
+        self._sender_id = sender_id
+        # TODO sign, timestamp
 
     @property
     def sender_id(self):
-        pass
+        return self._sender_id
 
     def verify_signatures(self, signature_service):
         pass
