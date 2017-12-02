@@ -1,4 +1,5 @@
 import abc
+import json
 
 
 class Message(object):
@@ -22,17 +23,37 @@ class Message(object):
         """Returns JSON version of this message (unicode)"""
         raise NotImplementedError()
 
-    @staticmethod
-    def from_json(self, json):
+    @classmethod
+    def from_json(cls, json_str):
         """Returns the correct Message subclass from the json.
 
         Args:
-            json (unicode): includes type field
+            json_str (unicode): includes type field
 
         Returns:
             Message
         """
-        pass
+        print "JSON: {}".format(json_str)
+        msg = json.loads(json_str)
+        if msg["type"] == "INTRO":
+            return IntroMessage.from_json(json_str)
+
+
+class IntroMessage(Message):
+    def __init__(self, uuid):
+        self._id = uuid
+
+    def to_json(self):
+        return json.dumps({type: "INTRO", id: self._id})
+
+    @classmethod
+    def from_json(cls, json_str):
+        msg_dict = json.loads(json_str)
+        assert msg_dict["type"] == "INTRO"
+        return IntroMessage(msg_dict["id"])
+
+    def verify_signatures(self, signature_service):
+        raise NotImplementedError("no")
 
 
 class GetMessage(Message):
