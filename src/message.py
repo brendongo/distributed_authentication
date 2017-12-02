@@ -5,7 +5,7 @@ class Message(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         """Validates all of the necessary signatures.
         
         Args:
@@ -58,7 +58,7 @@ class GetMessage(Message):
     def client_id(self):
         pass
 
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         pass
 
     def to_json(self):
@@ -97,7 +97,7 @@ class DecryptionShareMessage(Message):
     def sender_id(self):
         pass
 
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         pass
 
     def to_json(self):
@@ -124,7 +124,7 @@ class ResponseMessage(Message):
     def sender_id(self):
         pass
 
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         pass
 
     def to_json(self):
@@ -159,7 +159,7 @@ class PutMessage(Message):
     def client_id(self):
         pass
 
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         pass
 
     def to_json(self):
@@ -197,7 +197,7 @@ class PutAcceptMessage(Message):
     def sender_id(self):
         pass
 
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         pass
 
     def to_json(self):
@@ -218,7 +218,7 @@ class PutCompleteMessage(Message):
     def sender_id(self):
         pass
 
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         pass
 
     def to_json(self):
@@ -246,7 +246,7 @@ class CatchUpRequestMessage(Message):
     def timestamps(self):
         pass
 
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         pass
 
     def to_json(self):
@@ -273,7 +273,7 @@ class CatchUpResponseMessage(Message):
     def entries(self):
         pass
 
-    def validate(self, signature_service):
+    def verify_signatures(self, signature_service):
         pass
 
     def to_json(self):

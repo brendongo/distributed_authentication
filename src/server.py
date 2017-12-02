@@ -8,12 +8,15 @@ class Server(object):
         """
         pass
 
-   def state_machine(self, key):
-       """Returns the state machine associated with this key, if it exists.
+   def get_state_machine(self, msg):
+       """Returns the state machine associated with this msg, if it exists.
        Otherwise it creates a StateMachine and returns it.
 
        Args:
-           key (string)
+           msg (Message)
+
+       Returns:
+           StateMachine | None: None if msg's timestamp is too old
        """
        pass
 
