@@ -2,7 +2,7 @@ import asyncore
 
 
 class Address(object):
-    def __init__(self, uuid, port, server):
+    def __init__(self, uuid, port, hostname, server):
         """Wrapper around uuid, port, server
 
         Args:
@@ -13,6 +13,7 @@ class Address(object):
         self._id = uuid
         self._port = port
         self._server = server
+        self._hostname = hostname
 
     @property
     def id(self):
@@ -26,6 +27,10 @@ class Address(object):
     def server(self):
         return self._server
 
+    @property
+    def hostname(self):
+        return self._hostname
+
 
 class MessagingService(asyncore.dispatcher):
     def __init__(self, addresses, server):
@@ -35,7 +40,19 @@ class MessagingService(asyncore.dispatcher):
             addresses (list[Address]): contains id, port, (server or client)
             server (Server): either a client or server
         """
-        pass
+        asyncore.dispatcher.__init__(self)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.set_reuse_addr()
+        print "Binding to port: {}".format(server.port)
+        self.bind((server.host, server.port))
+        self.listen(5)
+        self._sockets = {}
+        for addr in addresses:
+            if addr.server and addr.port >= server.port:
+                print "Trying to connect to: {}:{}".format(
+                        addr.hostname, addr.port)
+                socket = Socket((addr.hostname, addr.port))
+                self._sockets[addr.id] = socket
 
     def send(self, message, destination_id):
         """Send message to destination
@@ -56,7 +73,13 @@ class MessagingService(asyncore.dispatcher):
 
     def handle_accept(self):
         """Opens a connection"""
-        pass
+        pair = self.accept()
+        if pair is not None:
+            sock, addr = pair
+            print 'Incoming connection from %s' % repr(pair)
+            socket = Socket(sock=sock)
+            socket.send("Accepted connection from: {}".format(pair))
+            socket.send("We did it!")
 
 
 class Socket(asyncore.dispatcher_with_send):
@@ -77,4 +100,5 @@ class Socket(asyncore.dispatcher_with_send):
 
     def handle_read(self):
         """Receives data"""
-        pass
+        data = self.recv(8192)
+        print "Received: {}".format(data)
