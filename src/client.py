@@ -6,6 +6,7 @@ import threading
 from state_machine import ClientGetStateMachine, ClientPutStateMachine
 from messaging_service import MessagingService, Address
 from message import LoginRequest
+from message import EnrollRequest
 from signature_service import SignatureService
 
 
@@ -112,7 +113,9 @@ class User(object):
         self._messaging_service.send(l, self._client_id)
 
     def enroll(self, username, password, callback):
-        pass
+        e = EnrollRequest(username, password, self.id)
+        self._callbacks[(username, e.timestamp)] = callback
+        self._messaging_service.send(e, self._client_id)
 
     def handle_message(self, msg):
         if isinstance(msg, LoginResponse):
@@ -135,6 +138,6 @@ if __name__ == "__main__":
         user = User(7)
         import time
         time.sleep(1)
-        user.login("bdon", "bdon", printo)
+        user.enroll("bdon", "bdon", printo)
     elif args.user == 7:
         client = ApplicationClient(None, 7)

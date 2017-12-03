@@ -25,6 +25,10 @@ class ClientPutStateMachine(object):
         self._responses = []
         self._server = server
         self._enroll_request = enroll_request
+        put = PutMessage(
+            enroll_request.username, "-" * 32, server.id, server.signature_service)
+        server.messaging_service.broadcast(put)
+
 
     def handle_message(self, message):
         assert isinstance(message, PutCompleteMessage)

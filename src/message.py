@@ -37,44 +37,43 @@ class Message(object):
         raise NotImplementedError()
 
     @classmethod
-    def from_json(cls, json_str):
+    def from_json(cls, json_obj):
         """Returns the correct Message subclass from the json.
 
         Args:
-            json_str (unicode): includes type field
+            json_obj (dict): json object
 
         Returns:
             Message
         """
-        print "JSON: {}".format(json_str)
-        msg = json.loads(json_str)
-        if msg["type"] == "INTRO":
-            return IntroMessage.from_json(json_str)
-        elif msg["type"] == "LOGIN":
-            return LoginRequest.from_json(json_str)
-        elif msg["type"] == "ENROLL":
-            return EnrollRequest.from_json(json_str)
-        elif msg["type"] == "LOGIN_RESPONSE":
-            return LoginResponse.from_json(json_str)
-        elif msg["type"] == "ENROLL_RESPONSE":
-            return EnrollResponse.from_json(json_str)
-        elif msg["type"] == "GET":
-            return GetMessage.from_json(json_str)
-        elif msg["type"] == "DECRYPTION_SHARE":
-            return DecryptionShareMessage.from_json(json_str)
-        elif msg["type"] == "RESPONSE":
-            return GetResponseMessage.from_json(json_str)
-        elif msg["type"] == "PUT":
-            return PutMessage.from_json(json_str)
-        elif msg["type"] == "PUT_ACCEPT":
-            return PutAcceptMessage.from_json(json_str)
-        elif msg["type"] == "PUT_COMPLETE":
-            return PutCompleteMessage.from_json(json_str)
-        elif msg["type"] == "CATCH_UP_REQUEST":
-            return CatchUpRequestMessage.from_json(json_str)
-        elif msg["type"] == "CATCH_UP_RESPONSE":
-            return CatchUpResponseMessage.from_json(json_str)
-        assert False, "Unidentifiable type %s" % msg["type"]
+        print "JSON: {}".format(json_obj)
+        if json_obj["type"] == "INTRO":
+            return IntroMessage.from_json(json_obj)
+        elif json_obj["type"] == "LOGIN":
+            return LoginRequest.from_json(json_obj)
+        elif json_obj["type"] == "ENROLL":
+            return EnrollRequest.from_json(json_obj)
+        elif json_obj["type"] == "LOGIN_RESPONSE":
+            return LoginResponse.from_json(json_obj)
+        elif json_obj["type"] == "ENROLL_RESPONSE":
+            return EnrollResponse.from_json(json_obj)
+        elif json_obj["type"] == "GET":
+            return GetMessage.from_json(json_obj)
+        elif json_obj["type"] == "DECRYPTION_SHARE":
+            return DecryptionShareMessage.from_json(json_obj)
+        elif json_obj["type"] == "RESPONSE":
+            return GetResponseMessage.from_json(json_obj)
+        elif json_obj["type"] == "PUT":
+            return PutMessage.from_json(json_obj)
+        elif json_obj["type"] == "PUT_ACCEPT":
+            return PutAcceptMessage.from_json(json_obj)
+        elif json_obj["type"] == "PUT_COMPLETE":
+            return PutCompleteMessage.from_json(json_obj)
+        elif json_obj["type"] == "CATCH_UP_REQUEST":
+            return CatchUpRequestMessage.from_json(json_obj)
+        elif json_obj["type"] == "CATCH_UP_RESPONSE":
+            return CatchUpResponseMessage.from_json(json_obj)
+        assert False, "Unidentifiable type %s" % json_obj["type"]
 
 
 class LoginRequest(Message):
@@ -110,11 +109,11 @@ class LoginRequest(Message):
         return self._username
 
     @classmethod
-    def from_json(cls, json_str):
-        obj = json.loads(json_str)
-        assert obj["type"] == "LOGIN"
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "LOGIN"
         return cls(
-            obj["username"], obj["u"], obj["user_id"], obj["timestamp"])
+            json_obj["username"], json_obj["u"], json_obj["user_id"],
+            json_obj["timestamp"])
 
     def verify_signatures(self, signature_service=None):
         return True
@@ -152,12 +151,11 @@ class EnrollRequest(Message):
         return self._username
 
     @classmethod
-    def from_json(cls, json_str):
-        obj = json.loads(json_str)
-        assert obj["type"] == "ENROLL"
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "ENROLL"
         return cls(
-                obj["username"], obj["password"],
-                obj["user_id"], obj["timestamp"])
+                json_obj["username"], json_obj["password"],
+                json_obj["user_id"], json_obj["timestamp"])
 
     def verify_signatures(self, signature_service=None):
         return True
@@ -197,12 +195,11 @@ class LoginResponse(Message):
         return self._username
 
     @classmethod
-    def from_json(cls, json_str):
-        obj = json.loads(json_str)
-        assert obj["type"] == "LOGIN_RESPONSE"
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "LOGIN_RESPONSE"
         return cls(
-                obj["username"], obj["v"], obj["encrypted"],
-                obj["timestamp"])
+                json_obj["username"], json_obj["v"],
+                json_obj["encrypted"], json_obj["timestamp"])
 
     def verify_signatures(self, signature_service=None):
         return True
@@ -229,10 +226,9 @@ class EnrollResponse(Message):
         return self._username
 
     @classmethod
-    def from_json(cls, json_str):
-        obj = json.loads(json_str)
-        assert obj["type"] == "ENROLL_RESPONSE"
-        return cls(obj["username"], obj["timestamp"])
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "ENROLL_RESPONSE"
+        return cls(json_obj["username"], json_obj["timestamp"])
 
     def verify_signatures(self, signature_service=None):
         return True
@@ -250,10 +246,9 @@ class IntroMessage(Message):
         return self._id
 
     @classmethod
-    def from_json(cls, json_str):
-        msg_dict = json.loads(json_str)
-        assert msg_dict["type"] == "INTRO"
-        return cls(msg_dict["id"])
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "INTRO"
+        return cls(json_obj["id"])
 
     def verify_signatures(self, signature_service):
         raise NotImplementedError("no")
@@ -305,13 +300,12 @@ class GetMessage(Message):
             "timestamp": self.timestamp})
 
     @classmethod
-    def from_json(cls, json_str):
-        msg_dict = json.loads(json_str)
-        assert msg_dict["type"] == "GET"
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "GET"
         return cls(
-            msg_dict["key"], msg_dict["client_id"],
-            signature=msg_dict["signature"],
-            timestamp=msg_dict["timestamp"])
+            json_obj["key"], json_obj["client_id"],
+            signature=json_obj["signature"],
+            timestamp=json_obj["timestamp"])
 
 
 class DecryptionShareMessage(Message):
@@ -370,11 +364,11 @@ class DecryptionShareMessage(Message):
             "signature": self._signature})
 
     @classmethod
-    def from_json(cls, json_str):
-        msg_dict = json.loads(json_str)
-        assert msg_dict["type"] == "DECRYPTION_SHARE"
-        return cls(msg_dict["decryption_share"], msg_dict["sender_id"],
-                    msg_dict["get_message"], signature=msg_dict["signature"])
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "DECRYPTION_SHARE"
+        return cls(json_obj["decryption_share"], json_obj["sender_id"],
+                   Message.from_json(json.loads(json_obj["get_message"])),
+                   signature=json_obj["signature"])
 
 
 class GetResponseMessage(Message):
@@ -419,13 +413,12 @@ class GetResponseMessage(Message):
             "signature": self.signature})
 
     @classmethod
-    def from_json(cls, json_str):
-        msg_dict = json.loads(json_str)
-        assert msg_dict["type"] == "RESPONSE"
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "RESPONSE"
         return cls(
-                Message.from_json(json.dumps(msg_dict["get_msg"])),
-                msg_dict["secret"], msg_dict["sender_id"],
-                signature=msg_dict["signature"])
+                Message.from_json(json.loads(json_obj["get_msg"])),
+                json_obj["secret"], json_obj["sender_id"],
+                signature=json_obj["signature"])
 
 
 class PutMessage(Message):
@@ -481,13 +474,12 @@ class PutMessage(Message):
             "timestamp": self.timestamp})
 
     @classmethod
-    def from_json(cls, json_str):
-        msg_dict = json.loads(json_str)
-        assert msg_dict["type"] == PUT
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "PUT"
         return cls(
-            msg_dict["key"], msg_dict["secret"], msg_dict["client_id"],
-            signature=msg_dict["signature"],
-            timestamp=msg_dict["timestamp"])
+            json_obj["key"], json_obj["secret"], json_obj["client_id"],
+            signature=json_obj["signature"],
+            timestamp=json_obj["timestamp"])
 
 
 class PutAcceptMessage(Message):
@@ -542,12 +534,11 @@ class PutAcceptMessage(Message):
             "signature": self._signature})
 
     @classmethod
-    def from_json(cls, json_str):
-        msg_dict = json.loads(json_str)
-        assert msg_dict["type"] == "PUT_ACCEPT"
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "PUT_ACCEPT"
         return cls(
-            Message.from_json(json.dumps(msg_dict["put_message"])),
-            msg_dict["sender_id"], signature=msg_dict["signature"])
+            Message.from_json(json.loads(json_obj["put_message"])),
+            json_obj["sender_id"], signature=json_obj["signature"])
 
 
 class PutCompleteMessage(Message):
@@ -591,12 +582,11 @@ class PutCompleteMessage(Message):
             "signature": self._signature})
 
     @classmethod
-    def from_json(cls, json_str):
-        msg_dict = json.loads(json_str)
-        assert msg_dict["type"] == "PUT_COMPLETE"
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "PUT_COMPLETE"
         return cls(
-            Message.from_json(json.dumps(msg_dict["put_msg"])),
-            msg_dict["sender_id"], signature=msg_dict["signature"])
+            Message.from_json(json.loads(json_obj["put_msg"])),
+            json_obj["sender_id"], signature=json_obj["signature"])
 
 
 class CatchUpRequestMessage(Message):
@@ -638,11 +628,10 @@ class CatchUpRequestMessage(Message):
             "signature": self._signature})
 
     @classmethod
-    def from_json(cls, json_str):
-        msg_dict = json.loads(json_str)
-        assert msg_dict["type"] == "CATCH_UP_REQUEST"
+    def from_json(cls, json_obj):
+        assert json_obj["type"] == "CATCH_UP_REQUEST"
         return cls(
-            None, msg_dict["sender_id"], signature=msg_dict["signature"])
+            None, json_obj["sender_id"], signature=json_obj["signature"])
 
 
 class CatchUpResponseMessage(Message):
@@ -670,5 +659,5 @@ class CatchUpResponseMessage(Message):
         pass
 
     @classmethod
-    def from_json(cls, json_str):
+    def from_json(cls, json_obj):
         pass

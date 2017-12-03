@@ -146,7 +146,7 @@ class Socket(asyncore.dispatcher_with_send):
         print "Received: {}".format(data)
         if not data:
             return
-        msg = Message.from_json(data)
+        msg = Message.from_json(json.loads(data))
         print "Received: {}".format(msg.to_json())
         if isinstance(msg, IntroMessage):
             self._messaging_service.add_socket(self, msg.id)
