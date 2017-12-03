@@ -28,6 +28,7 @@ class ClientPutStateMachine(object):
         put = PutMessage(
             enroll_request.username, "-" * 32, server.id, server.signature_service, timestamp=enroll_request.timestamp)
         server.messaging_service.broadcast(put)
+        self._sent = False
 
 
     def handle_message(self, message):
@@ -38,13 +39,13 @@ class ClientPutStateMachine(object):
 
             print "RECEIVED A NEW ONE!"
 
-            if len(self._responses) > self._server.f + 1:
+            if not self._sent and len(self._responses) > self._server.f + 1:
                 enroll_response = EnrollResponse(
                     self._enroll_request.username,
                     self._enroll_request.timestamp)
-                print "SENDING IT BITCHES!!!!!"
                 self._server.messaging_service.send(
                         enroll_response, self._enroll_request.user_id)
+                self._sent = True
 
 
 class ClientGetStateMachine(object):
@@ -59,6 +60,7 @@ class ClientGetStateMachine(object):
         print "TIMESTAMP: {}".format(get.timestamp)
         print "LOGIN REQUEST: {}".format(login_request.to_json())
         server.messaging_service.broadcast(get)
+        self._sent = False
 
     def handle_message(self, message):
         assert isinstance(message, GetResponseMessage)
@@ -67,7 +69,7 @@ class ClientGetStateMachine(object):
             self._responses.append(message.sender_id)
 
             # TODO: Check f + 1 SAME
-            if len(self._responses) > self._server.f + 1:
+            if not self._sent and len(self._responses) > self._server.f + 1:
                 # TODO: do PAKE
                 v = 0
                 encrypted = "lol"
@@ -76,6 +78,7 @@ class ClientGetStateMachine(object):
                     encrypted, self._login_request.timestamp)
                 self._server.messaging_service.send(
                         login_response, self._login_request.user_id)
+                self._sent = True
 
 
 class PutStateMachine(object):

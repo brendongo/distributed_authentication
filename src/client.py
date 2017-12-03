@@ -151,5 +151,6 @@ if __name__ == "__main__":
         print "Sending"
         user.login("bdon", "bdon", printo)
         print "Success!"
+        user.enroll("bdon", "bdon", printo)
     elif args.user == 7:
         client = ApplicationClient(None, 7)
