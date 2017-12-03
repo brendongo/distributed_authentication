@@ -1,7 +1,13 @@
 from signature_service import SignatureService
 from threshold_encryption_service import ThresholdEncryptionService
-from signature_service import SignatureService
 from secrets_db import SecretsDB
+
+from message import GetMessage
+from message import DecryptionShareMessage
+from message import PutMessage
+from message import PutAcceptMessage
+from state_machine import GetStateMachine
+from state_machine import PutStateMachine
 
 
 class Server(object):
@@ -21,10 +27,23 @@ class Server(object):
         self._secrets_db = SecretsDB('secrets' + str(uid) + 'db')
         self._N = 7
         self._f = 2
-
+        self._state_machines = {}
 
     def handle_message(self, msg):
-        pass
+        if not msg.verify_signatures(self._signature_service):
+            return
+
+        if (isinstance(msg, GetMessage) or
+                isinstance(msg, DecryptionShareMessage)):
+            key = (msg.key, msg.timestamp, "GET")
+            if key not in self._state_machines:
+                self._state_machines[key] = GetStateMachine(msg, self)
+            self._state_machines[key].handle_message(msg)
+        elif isinstance(msg, PutMessage) or isinstance(msg, PutAcceptMessage):
+            key = (msg.key, msg.timestamp, "PUT")
+            if key not in self._state_machines:
+                self._state_machines[key] = PutStateMachine(msg, self)
+            self._state_machines[key].handle_message(msg)
 
     @property
     def id(self):
