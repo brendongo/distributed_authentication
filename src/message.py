@@ -173,18 +173,18 @@ class DecryptionShareMessage(Message):
 
     @property
     def data(self):
-        return "".join([serialize(self._decryption_share)
+        return "".join([serialize(self._decryption_share),
                         str(self._sender_id), 
                         self._get_message.data, self._get_message._signature])
 
     def verify_signatures(self, signature_service):
-        return self._get_message.verify_signatures(signatures) and
-                signature_service.validate(self.data, self._sender_id, self._signature)
+        return (self._get_message.verify_signatures(signatures) and
+                signature_service.validate(self.data, self._sender_id, self._signature))
 
     def to_json(self):
         return json.dumps({
             type: "DECRYPTION_SHARE",
-            decryption_share = self._decryption_share,
+            decryption_share: self._decryption_share,
             sender_id: self._sender_id,
             get_message: self._get_message.to_json(),
             signature: self._signature})
@@ -271,7 +271,8 @@ class PutMessage(Message):
     def client_id(self):
         return self._client_id
 
-    @property data(self):
+    @property 
+    def data(self):
         return "".join([self._key, self._secret, str(self._client_id)])
 
     def verify_signatures(self, signature_service):
@@ -330,8 +331,8 @@ class PutAcceptMessage(Message):
         return "".join([self._put_message.data, self._put_message._signature, str(self._sender_id)])
 
     def verify_signatures(self, signature_service):
-        return self._put_message.verify_signatures(signature_service) and
-            signature_service.validate(self.data, self._sender_id, self._signature)
+        return (self._put_message.verify_signatures(signature_service) and
+            signature_service.validate(self.data, self._sender_id, self._signature))
 
     def to_json(self):
         return json.dumps({
