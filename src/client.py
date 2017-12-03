@@ -1,5 +1,6 @@
-import socket
 import message
+import socket
+import threading
 from state_machine import ClientGetStateMachine, ClientPutStateMachine
 from messaging_service import MessagingService, Address
 
@@ -8,7 +9,6 @@ class ApplicationClient(object):
     def __init__(self, server_ports, signature_service, client_id):
         self._state_machines = {}
 
-        server_ports = [8001, 8002, 8003]
         ADDRESSES = [Address(port - 8001, port, 'localhost', True)] for
                      port in xrange(8001, 8008)]
         ADDRESSES += [Address(7, 8008, 'localhost', False)]
@@ -57,9 +57,24 @@ class ApplicationClient(object):
 
 class User(object):
     def __init__(self, application_client_port):
+        ADDRESSES = [Address(7, 8008, 'localhost', False)]
+        self._messaging_service = MessagingService(ADDRESSES, self)
 
-        #self._messaging_service = MessagingService()
-        #Thread(asyncore.loop()) # blocks
+        thread = threading.Thread(target=asyncore.loop)
+        thread.daemon = True
+        thread.start()  # Wheeeeeeeee
+
+    @property
+    def id(self):
+        return 8
+
+    @property
+    def port(self):
+        return 8009
+
+    @property
+    def hostname(self):
+        return 'localhost'
 
     def login(self, username, callback):
         # Make a call to MessagingService, send a GetRequest to ApplicationClient
