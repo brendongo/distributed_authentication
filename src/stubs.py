@@ -1,7 +1,13 @@
+from threshold_encryption_service import ThresholdEncryptionService
+
 class StubServer(object):
+    def __init__(self, uid):
+        self._id = uid
+        self._threshold = ThresholdEncryptionService('thenc8_2.keys', uid)
+
     @property
     def id(self):
-        return 1
+        return self._id
 
     @property
     def port(self):
@@ -17,7 +23,7 @@ class StubServer(object):
 
     @property
     def threshold_encryption_service(self):
-        return StubThresholdEncryptionService()
+        return self._threshold
 
     @property
     def signature_service(self):
@@ -29,7 +35,8 @@ class StubServer(object):
 
     @property
     def secrets_db(self):
-        return StubSecretsDb()
+        from secrets_db import SecretsDB
+        return SecretsDB('testdb')
 
     @property
     def catchup_state_machine(self):
@@ -71,12 +78,17 @@ class StubThresholdEncryptionService():
 
 
 class StubSecretsDb():
+    def __init__(self):
+        self.store = {}
+
+
     def get(self, key):
         print "DB Get ", key
-        return "pasword1234"
+        return self.store[key]
 
     def put(self, key, val):
         print "DB Put ", key, ":", val
+        self.store[key] = val
 
 
 class StubMessagingService():
