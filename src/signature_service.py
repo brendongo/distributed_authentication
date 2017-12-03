@@ -48,7 +48,7 @@ class SignatureService(object):
         Returns:
             string
         """
-        return self.sk.sign(msg)
+        return self.sk.sign(msg).encode('base64')
 
     def validate(self, msg, sender, signature):
         """Validate signature on message
@@ -62,7 +62,7 @@ class SignatureService(object):
             bool
         """
         # If we do not have the sender on file, look for their config file
-        return True
+        signature = signature.decode('base64')
         if sender not in self.vks:
             sender_config_filename = path.join(CONFIG_DIR, str(sender) + CONFIG_SUFFIX)
             if path.isfile(sender_config_filename):

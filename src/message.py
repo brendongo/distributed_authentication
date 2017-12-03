@@ -7,9 +7,6 @@ class Message(object):
     __metaclass__ = abc.ABCMeta
 
     def set_signature(self, signature_service=None, signature=None):
-        # TODO: Fix
-        self._signature = ""
-        return
         assert signature_service or signature
         if signature:
             self._signature = signature
