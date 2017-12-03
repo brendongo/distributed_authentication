@@ -72,7 +72,11 @@ class IntroMessage(Message):
         self._id = uuid
 
     def to_json(self):
-        return json.dumps({type: "INTRO", id: self._id})
+        return json.dumps({"type": "INTRO", "id": self._id})
+
+    @property
+    def id(self):
+        return self._id
 
     @classmethod
     def from_json(cls, json_str):
@@ -129,6 +133,7 @@ class GetMessage(Message):
         msg_dict = json.loads(json_str)
         assert msg_dict["type"] == "GET"
         return GetMessage(msg_dict["key"], msg_dict["client_id"], signature=msg_dict["signature"])
+        pass
 
 class DecryptionShareMessage(Message):
     def __init__(self, decryption_share, sender_id, get_message, signature_service=None, signature=None):
@@ -275,6 +280,10 @@ class PutMessage(Message):
     def to_json(self):
         pass
 
+    @classmethod
+    def from_json(cls, json_str):
+        pass
+
 
 class PutAcceptMessage(Message):
     def __init__(self, put_message, sender_id, signature_service):
@@ -315,6 +324,10 @@ class PutAcceptMessage(Message):
     def to_json(self):
         pass
 
+    @classmethod
+    def from_json(cls, json_str):
+        pass
+
 
 class PutCompleteMessage(Message):
     def __init__(self, sender_id, signature_service):
@@ -336,6 +349,10 @@ class PutCompleteMessage(Message):
 
     def to_json(self):
         pass
+
+    @classmethod
+    def from_json(cls, json_str):
+        msg_dict = json.loads(json_str)
 
 
 class CatchUpRequestMessage(Message):
@@ -365,6 +382,10 @@ class CatchUpRequestMessage(Message):
     def to_json(self):
         pass
 
+    @classmethod
+    def from_json(cls, json_str):
+        pass
+
 
 class CatchUpResponseMessage(Message):
     def __init__(self, entries, sender_id, signature_service):
@@ -390,4 +411,8 @@ class CatchUpResponseMessage(Message):
         pass
 
     def to_json(self):
+        pass
+
+    @classmethod
+    def from_json(cls, json_str):
         pass

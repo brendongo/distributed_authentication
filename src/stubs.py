@@ -1,9 +1,11 @@
+from signature_service import SignatureService
 from threshold_encryption_service import ThresholdEncryptionService
 
 class StubServer(object):
     def __init__(self, uid):
         self._id = uid
         self._threshold = ThresholdEncryptionService('thenc8_2.keys', uid)
+        self._signature_service = SignatureService(uid)
 
     @property
     def id(self):
@@ -27,7 +29,7 @@ class StubServer(object):
 
     @property
     def signature_service(self):
-        return StubSignatureService()
+        return self._signature_service
 
     @property
     def write_ahead_log(self):
