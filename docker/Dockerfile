@@ -15,6 +15,8 @@ RUN pip install pycrypto
 RUN pip install ecdsa
 RUN pip install zfec
 RUN pip install gipc
+RUN pip install pysha3
+RUN pip install hkdf
 RUN wget https://crypto.stanford.edu/pbc/files/pbc-0.5.14.tar.gz
 RUN tar -xvf pbc-0.5.14.tar.gz
 RUN cd pbc-0.5.14 && ./configure && make && make install
