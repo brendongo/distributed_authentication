@@ -1,11 +1,14 @@
 from signature_service import SignatureService
 from threshold_encryption_service import ThresholdEncryptionService
+from secrets_db import SecretsDB
+
 
 class StubServer(object):
     def __init__(self, uid):
         self._id = uid
         self._threshold = ThresholdEncryptionService('thenc8_2.keys', uid)
         self._signature_service = SignatureService(uid)
+        self._secrets_db = SecretsDB('databases/secrets' + str(uid) + 'db')
 
     @property
     def id(self):
@@ -37,8 +40,7 @@ class StubServer(object):
 
     @property
     def secrets_db(self):
-        from secrets_db import SecretsDB
-        return SecretsDB('testdb')
+        return self._secrets_db
 
     @property
     def catchup_state_machine(self):

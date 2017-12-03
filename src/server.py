@@ -24,7 +24,7 @@ class Server(object):
             'thenc8_2.keys',
             uid
         )
-        self._secrets_db = SecretsDB('secrets' + str(uid) + 'db')
+        self._secrets_db = SecretsDB('databases/secrets' + str(uid) + 'db')
         self._N = 7
         self._f = 2
         self._state_machines = {}

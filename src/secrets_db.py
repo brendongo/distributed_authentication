@@ -37,10 +37,11 @@ class SecretsDB(object):
 
 
 if __name__ == '__main__':
-    conn = sqlite3.connect('testdb')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE secrets
-                (key TEXT, U BLOB, V BLOB)''')
+    for i in xrange(7):
+        conn = sqlite3.connect('databases/secrets' + str(i) + 'db')
+        c = conn.cursor()
+        c.execute('''CREATE TABLE secrets
+                    (key TEXT, U BLOB, V BLOB)''')
 
     # db = SecretsDB('testdb')
     # db.put("brendon", "eats food")
