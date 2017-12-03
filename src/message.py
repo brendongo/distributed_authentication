@@ -54,7 +54,7 @@ class Message(object):
         elif msg["type"] == "DECRYPTION_SHARE":
             return DecryptionShareMessage.from_json(json_str)
         elif msg["type"] == "RESPONSE":
-            return ResponseMessage.from_json(json_str)
+            return GetResponseMessage.from_json(json_str)
         elif msg["type"] == "PUT":
             return PutMessage.from_json(json_str)
         elif msg["type"] == "PUT_ACCEPT":
@@ -197,7 +197,7 @@ class DecryptionShareMessage(Message):
                     msg_dict["get_message"], signature=msg_dict["signature"])
 
 # TODO: Better name
-class ResponseMessage(Message):
+class GetResponseMessage(Message):
     def __init__(self, secret, sender_id, signature_service=None, signature=None):
         """Constructs
 
@@ -237,7 +237,7 @@ class ResponseMessage(Message):
     def from_json(cls, json_str):
         msg_dict = json.loads(json_str)
         assert msg_dict["type"] == "RESPONSE"
-        return ResponseMessage(msg_dict["secret"], msg_dict["sender_id"], signature=msg_dict["signature"])
+        return GetResponseMessage(msg_dict["secret"], msg_dict["sender_id"], signature=msg_dict["signature"])
 
 class PutMessage(Message):
     def __init__(self, key, secret, client_id, signature_service=None, signature=None):

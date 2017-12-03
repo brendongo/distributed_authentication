@@ -5,7 +5,7 @@ from message import GetMessage
 from message import PutMessage
 from message import PutAcceptMessage
 from message import PutCompleteMessage
-from message import ResponseMessage
+from message import GetResponseMessage
 
 
 class StateMachine(object):
@@ -161,7 +161,7 @@ class GetStateMachine(object):
             self._heard_servers
         )
 
-        response_message = ResponseMessage(
+        response_message = GetResponseMessage(
             secret,
             self._server.id,
             self._server.signature_service
