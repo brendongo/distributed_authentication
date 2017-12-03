@@ -6,7 +6,9 @@ import threading
 from state_machine import ClientGetStateMachine, ClientPutStateMachine
 from messaging_service import MessagingService, Address
 from message import LoginRequest
+from message import LoginResponse
 from message import EnrollRequest
+from message import EnrollResponse
 from signature_service import SignatureService
 
 
@@ -36,6 +38,10 @@ class ApplicationClient(object):
         return 'localhost'
 
     @property
+    def f(self):
+        return 2
+
+    @property
     def signature_service(self):
         return self._signature_service
 
@@ -44,15 +50,17 @@ class ApplicationClient(object):
         return self._messaging_service
 
     def handle_message(self, msg):
-        if not msg.verify_signatures(self._signature_service):
-            return
+        #if not msg.verify_signatures(self._signature_service):
+        #    print "Welp, fuck"
+        #    return
 
         if isinstance(msg, message.LoginRequest):
             key = (msg.username, msg.timestamp, "LOGIN")
             state_machine = self._state_machines[key] = \
                     ClientGetStateMachine(msg, self)
         elif isinstance(msg, message.EnrollRequest):
-            key = (msg.username, msg.timestamp, "ENROLL")
+            key = (msg.timestamp, "ENROLL")
+            print "Creating key: {}".format(key)
             state_machine = self._state_machines[key] = \
                     ClientPutStateMachine(msg, self)
         elif isinstance(msg, message.GetResponseMessage):
@@ -63,6 +71,7 @@ class ApplicationClient(object):
         elif isinstance(msg, message.PutCompleteMessage):
             key = (msg.put_msg.timestamp, "ENROLL")
             state_machine = self._state_machines[key]
+            print "Forwarding to: {}".format(state_machine)
             assert state_machine
             state_machine.handle_message(msg)
         else:
@@ -77,7 +86,7 @@ class User(object):
         self._messaging_service = MessagingService(ADDRESSES, self)
 
         thread = threading.Thread(target=asyncore.loop)
-        thread.daemon = True
+        #thread.daemon = True
         thread.start()  # Wheeeeeeeee
 
     @property
@@ -118,8 +127,9 @@ class User(object):
         self._messaging_service.send(e, self._client_id)
 
     def handle_message(self, msg):
-        if isinstance(msg, LoginResponse):
+        if isinstance(msg, LoginResponse) or isinstance(msg, EnrollResponse):
             self._callbacks[(msg.username, msg.timestamp)](msg)
+
         #if msg.type == "GET":
         #    self._callbacks[msg.transaction_id](msg.value)
         #else:
@@ -138,6 +148,8 @@ if __name__ == "__main__":
         user = User(7)
         import time
         time.sleep(1)
-        user.enroll("bdon", "bdon", printo)
+        print "Sending"
+        user.login("bdon", "bdon", printo)
+        print "Success!"
     elif args.user == 7:
         client = ApplicationClient(None, 7)

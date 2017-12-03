@@ -143,7 +143,6 @@ class Socket(asyncore.dispatcher_with_send):
         """Receives data"""
         print "Handle_read"
         data = self.recv(8192)
-        print "Received: {}".format(data)
         if not data:
             return
         msg = Message.from_json(json.loads(data))
@@ -151,6 +150,7 @@ class Socket(asyncore.dispatcher_with_send):
         if isinstance(msg, IntroMessage):
             self._messaging_service.add_socket(self, msg.id)
         else:
+            print "Sending to server to handle!"
             self._server.handle_message(msg)
 
     def handle_connect(self):

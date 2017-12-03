@@ -26,7 +26,7 @@ class ClientPutStateMachine(object):
         self._server = server
         self._enroll_request = enroll_request
         put = PutMessage(
-            enroll_request.username, "-" * 32, server.id, server.signature_service)
+            enroll_request.username, "-" * 32, server.id, server.signature_service, timestamp=enroll_request.timestamp)
         server.messaging_service.broadcast(put)
 
 
@@ -36,10 +36,13 @@ class ClientPutStateMachine(object):
         if message.sender_id not in self._responses:
             self._responses.append(message.sender_id)
 
+            print "RECEIVED A NEW ONE!"
+
             if len(self._responses) > self._server.f + 1:
                 enroll_response = EnrollResponse(
                     self._enroll_request.username,
                     self._enroll_request.timestamp)
+                print "SENDING IT BITCHES!!!!!"
                 self._server.messaging_service.send(
                         enroll_response, self._enroll_request.user_id)
 
@@ -50,7 +53,11 @@ class ClientGetStateMachine(object):
         self._server = server
         self._login_request = login_request
         get = GetMessage(
-            login_request.username, server.id, server.signature_service)
+            login_request.username, server.id, server.signature_service,
+            timestamp=login_request.timestamp)
+        print "LOGIN REQUEST: {}".format(login_request.to_json())
+        print "TIMESTAMP: {}".format(get.timestamp)
+        print "LOGIN REQUEST: {}".format(login_request.to_json())
         server.messaging_service.broadcast(get)
 
     def handle_message(self, message):
@@ -145,6 +152,7 @@ class GetStateMachine(object):
             client_msg (GetMessage): message that this is handling
             server (Server)
         """
+        print "NOT A GET MSG: {}".format(client_msg)
         assert isinstance(client_msg, GetMessage)
 
         self._sent_share = False
@@ -156,11 +164,11 @@ class GetStateMachine(object):
 
     def _broadcast_decryption_share(self):
         self._encrypted = self._server.secrets_db.get(self._client_msg.key)
-        decryption_share = self._server.threshold_encryption_service.decrypt(
+        self._decryption_share = self._server.threshold_encryption_service.decrypt(
             self._encrypted
         )
         decryption_share_msg = DecryptionShareMessage(
-            decryption_share,
+            self._decryption_share,
             self._server.id,
             self._client_msg,
             self._server.signature_service
@@ -198,18 +206,19 @@ class GetStateMachine(object):
             self._sent_share = True
 
             # Add own share to share list
-            self._decryption_shares.append(decryption_share)
+            self._decryption_shares.append(self._decryption_share)
             self._heard_servers.append(self._server.id)
 
-        if message.sender_id not in self._heard_servers:
-            self._decryption_shares.append(message.decryption_share)
-            self._heard_servers.append(message.sender_id)
+        if isinstance(message, DecryptionShareMessage):
+            if message.sender_id not in self._heard_servers:
+                self._decryption_shares.append(message.decryption_share)
+                self._heard_servers.append(message.sender_id)
 
-            if not self._sent_response and self._enough_shares():
-                self._send_response_message()
-                self._sent_response = True
-                # TODO Cleanup
-            # TODO Ack message
+                if not self._sent_response and self._enough_shares():
+                    self._send_response_message()
+                    self._sent_response = True
+                    # TODO Cleanup
+                # TODO Ack message
 
 
 class CatchupStateMachine(object):

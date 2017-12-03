@@ -23,7 +23,7 @@ class Server(object):
         self._signature_service = SignatureService(uid)
         self._threshold_encryption_service = ThresholdEncryptionService(
             'thenc8_2.keys', uid)
-        self._secrets_db = SecretsDB('secrets' + str(uid) + 'db')
+        self._secrets_db = SecretsDB('databases/secrets' + str(uid) + 'db')
         self._N = 7
         self._f = 2
         self._state_machines = {}

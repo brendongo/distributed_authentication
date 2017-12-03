@@ -1,7 +1,7 @@
 import abc
 import json
 from datetime import datetime
-from tpke import serialize
+from tpke import serialize, deserialize1
 
 class Message(object):
     __metaclass__ = abc.ABCMeta
@@ -113,7 +113,7 @@ class LoginRequest(Message):
         assert json_obj["type"] == "LOGIN"
         return cls(
             json_obj["username"], json_obj["u"], json_obj["user_id"],
-            json_obj["timestamp"])
+            timestamp=json_obj["timestamp"])
 
     def verify_signatures(self, signature_service=None):
         return True
@@ -273,7 +273,7 @@ class GetMessage(Message):
 
     @property
     def timestamp(self):
-        pass
+        return self._timestamp
 
     @property
     def key(self):
@@ -347,7 +347,7 @@ class DecryptionShareMessage(Message):
 
     @property
     def data(self):
-        return "".join([serialize(self._decryption_share),
+        return "".join([serialize(self._decryption_share).encode('base-64'),
                         str(self._sender_id),
                         self._get_message.data, self._get_message._signature])
 
@@ -358,7 +358,7 @@ class DecryptionShareMessage(Message):
     def to_json(self):
         return json.dumps({
             "type": "DECRYPTION_SHARE",
-            "decryption_share": self._decryption_share,
+            "decryption_share": serialize(self._decryption_share).encode('base-64'),
             "sender_id": self._sender_id,
             "get_message": self._get_message.to_json(),
             "signature": self._signature})
@@ -366,7 +366,8 @@ class DecryptionShareMessage(Message):
     @classmethod
     def from_json(cls, json_obj):
         assert json_obj["type"] == "DECRYPTION_SHARE"
-        return cls(json_obj["decryption_share"], json_obj["sender_id"],
+        decryption_share = deserialize1(json_obj["decryption_share"].decode('base-64'))
+        return cls(decryption_share, json_obj["sender_id"],
                    Message.from_json(json.loads(json_obj["get_message"])),
                    signature=json_obj["signature"])
 
@@ -398,6 +399,10 @@ class GetResponseMessage(Message):
     @property
     def sender_id(self):
         return self._sender_id
+
+    @property
+    def signature(self):
+        return self._signature
 
     @property
     def data(self):
