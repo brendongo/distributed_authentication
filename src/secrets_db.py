@@ -1,18 +1,29 @@
 import sqlite3
+from tpke import serialize, deserialize1
 
 
 class SecretsDB(object):
     def __init__(self, db_filename):
         """Writes to db_filename somehow."""
         self._conn = sqlite3.connect(db_filename)
+        self._conn.text_factory = str
         self._cursor = self._conn.cursor()
 
     def get(self, key):
         self._cursor.execute("SELECT * FROM secrets WHERE key=?", (key,))
-        return self._cursor.fetchone()
+        key, U, V = self._cursor.fetchone()
 
-    def put(self, key, val):
-        self._cursor.execute("INSERT INTO secrets VALUES (?,?)", (key, val))
+        U = deserialize1(U)
+
+        threshold_secret = (U, V, None)
+        return threshold_secret
+
+    def put(self, key, threshold_secret):
+        U, V, W = threshold_secret
+
+        U = serialize(U)
+
+        self._cursor.execute("INSERT INTO secrets VALUES (?,?,?)", (key, U, V))
         self._conn.commit()
 
     def select(self, timestamps):
@@ -26,15 +37,15 @@ class SecretsDB(object):
 
 
 if __name__ == '__main__':
-    # conn = sqlite3.connect('testdb')
-    # c = conn.cursor()
-    # c.execute('''CREATE TABLE secrets
-    #             (key TEXT, val BLOB)''')
+    conn = sqlite3.connect('testdb')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE secrets
+                (key TEXT, U BLOB, V BLOB)''')
 
-    db = SecretsDB('testdb')
-    db.put("brendon", "eats food")
-    print db.get("brendon")
-    db.put("kenneth", 1234)
-    print db.get("brendon")
-    print db.get("kenneth")
-    print db.get("not there")
+    # db = SecretsDB('testdb')
+    # db.put("brendon", "eats food")
+    # print db.get("brendon")
+    # db.put("kenneth", 1234)
+    # print db.get("brendon")
+    # print db.get("kenneth")
+    # print db.get("not there")
