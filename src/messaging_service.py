@@ -144,6 +144,8 @@ class Socket(asyncore.dispatcher_with_send):
         msg = Message.from_json(data)
         if isinstance(msg, IntroMessage):
             self._messaging_service.add_socket(self, msg.id)
+        else:
+            pass  # Send it to the server
 
     def handle_connect(self):
         print "handle_connect"
@@ -155,7 +157,6 @@ class Socket(asyncore.dispatcher_with_send):
 if __name__ == "__main__":
     import argparse
     import time
-
 
     class ServerStub(object):
         def __init__(self, port):

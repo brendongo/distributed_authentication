@@ -91,6 +91,10 @@ class GetMessage(Message):
     def to_json(self):
         pass
 
+    @classmethod
+    def from_json(cls, json_str):
+        pass
+
 
 class DecryptionShareMessage(Message):
     def __init__(self, decryption_share, sender_id, get_message, signature_service):
@@ -133,6 +137,10 @@ class DecryptionShareMessage(Message):
     def to_json(self):
         pass
 
+    @classmethod
+    def from_json(cls, json_str):
+        pass
+
 
 # TODO: Better name
 class ResponseMessage(Message):
@@ -160,6 +168,10 @@ class ResponseMessage(Message):
         pass
 
     def to_json(self):
+        pass
+
+    @classmethod
+    def from_json(cls, json_str):
         pass
 
 
@@ -198,6 +210,10 @@ class PutMessage(Message):
         pass
 
     def to_json(self):
+        pass
+
+    @classmethod
+    def from_json(cls, json_str):
         pass
 
 
@@ -240,6 +256,10 @@ class PutAcceptMessage(Message):
     def to_json(self):
         pass
 
+    @classmethod
+    def from_json(cls, json_str):
+        pass
+
 
 class PutCompleteMessage(Message):
     def __init__(self, sender_id, signature_service):
@@ -261,6 +281,10 @@ class PutCompleteMessage(Message):
 
     def to_json(self):
         pass
+
+    @classmethod
+    def from_json(cls, json_str):
+        msg_dict = json.loads(json_str)
 
 
 class CatchUpRequestMessage(Message):
@@ -290,6 +314,10 @@ class CatchUpRequestMessage(Message):
     def to_json(self):
         pass
 
+    @classmethod
+    def from_json(cls, json_str):
+        pass
+
 
 class CatchUpResponseMessage(Message):
     def __init__(self, entries, sender_id, signature_service):
@@ -315,4 +343,8 @@ class CatchUpResponseMessage(Message):
         pass
 
     def to_json(self):
+        pass
+
+    @classmethod
+    def from_json(cls, json_str):
         pass
