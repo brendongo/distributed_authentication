@@ -67,6 +67,147 @@ class Message(object):
             return CatchUpResponseMessage.from_json(json_str)
         assert False, "Unidentifiable type %s" % msg["type"]
 
+
+class LoginRequest(Message):
+    def __init__(self, username, u, timestamp):
+        self._username = username
+        self._u = u
+        self._timestamp = timestamp
+
+    def to_json(self):
+        return json.dumps(
+            {"type": "LOGIN",
+             "username": self.username, "u": self.u,
+             "timestamp": self.timestamp})
+
+    @property
+    def u(self):
+        return self._u
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @property
+    def username(self):
+        return self._username
+
+    @classmethod
+    def from_json(cls, json_str):
+        obj = json.loads(json_str)
+        assert obj["type"] == "LOGIN"
+        return LoginRequest(obj["username"], obj["u"], obj["timestamp"])
+
+    def verify_signatures(self, signature_service=None):
+        return True
+
+
+class EnrollRequest(Message):
+    def __init__(self, username, password, timestamp):
+        self._username = username
+        self._password = password
+        self._timestamp = timestamp
+
+    def to_json(self):
+        return json.dumps(
+            {"type": "ENROLL",
+             "username": self.username, "password": self.password,
+             "timestamp": self.timestamp})
+
+    @property
+    def password(self):
+        return self._password
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @property
+    def username(self):
+        return self._username
+
+    @classmethod
+    def from_json(cls, json_str):
+        obj = json.loads(json_str)
+        assert obj["type"] == "ENROLL"
+        return EnrollRequest(
+                obj["username"], obj["password"], obj["timestamp"])
+
+    def verify_signatures(self, signature_service=None):
+        return True
+
+
+class LoginResponse(Message):
+    def __init__(self, username, v, encrypted, timestamp):
+        self._username = username
+        self._v = v
+        self._encrypted = encrypted
+        self._timestamp = timestamp
+
+    def to_json(self):
+        return json.dumps(
+            {"type": "LOGIN_RESPONSE",
+             "username": self.username, "v": self.v,
+             "encrypted": self.encrypted,
+             "timestamp": self.timestamp})
+
+    @property
+    def v(self):
+        return self._v
+
+    @property
+    def encrypted(self):
+        return self._encrypted
+
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @property
+    def username(self):
+        return self._username
+
+    @classmethod
+    def from_json(cls, json_str):
+        obj = json.loads(json_str)
+        assert obj["type"] == "LOGIN_RESPONSE"
+        return EnrollRequest(
+                obj["username"], obj["v"], obj["encrypted"],
+                obj["timestamp"])
+
+    def verify_signatures(self, signature_service=None):
+        return True
+
+
+class EnrollResponse(Message):
+    def __init__(self, username, timestamp):
+        self._username = username
+        self._timestamp = timestamp
+
+    def to_json(self):
+        return json.dumps(
+            {"type": "ENROLL_RESPONSE",
+             "username": self.username, "timestamp": self.timestamp})
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @property
+    def username(self):
+        return self._username
+
+    @classmethod
+    def from_json(cls, json_str):
+        obj = json.loads(json_str)
+        assert obj["type"] == "ENROLL_RESPONSE"
+        return EnrollRequest(obj["username"], obj["timestamp"])
+
+    def verify_signatures(self, signature_service=None):
+        return True
+
+
 class IntroMessage(Message):
     def __init__(self, uuid):
         self._id = uuid
