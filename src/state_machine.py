@@ -61,6 +61,7 @@ class PutStateMachine(object):
 
     def handle_message(self, message):
         assert type(message) is PutMessage or type(message) is PutAcceptMessage
+        assert message.verify_signatures(self._server.signature_service)
 
         # Broadcast put_accept once
         if not self._sent_accept:
@@ -135,6 +136,7 @@ class GetStateMachine(object):
     def handle_message(self, message):
         assert (type(message) is GetMessage or
                 type(message) is DecryptionShareMessage)
+        assert (message.verify_signature(self._server.signature_service))
 
         if not self._sent_share:
             self._broadcast_decryption_share()
