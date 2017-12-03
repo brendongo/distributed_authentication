@@ -91,7 +91,8 @@ class MessagingService(asyncore.dispatcher):
             message (Message)
         """
         for server in self._server_addresses:
-            self.send(message, server.id)
+            if server.id != self._server.id:
+                self.send(message, server.id)
 
     def handle_accept(self):
         """Opens a connection"""
