@@ -99,7 +99,10 @@ class GetStateMachine(object):
         self._sent_response = False
 
     def _broadcast_decryption_share(self):
-        decryption_share = self._server.secrets_db.get(self._client_msg.key)
+        self._encrypted = self._server.secrets_db.get(self._client_msg.key)
+        decryption_share = self._server.threshold_encryption_service.decrypt(
+            self._encrypted
+        )
         decryption_share_msg = DecryptionShareMessage(
             decryption_share,
             self._server.id,
@@ -112,8 +115,10 @@ class GetStateMachine(object):
         return len(self._decryption_shares) >= (2 * self._server.f + 1)
 
     def _send_response_message(self):
-        secret = self._server.threshold_encryption_service.decrypt(
-            self._decryption_shares
+        secret = self._server.threshold_encryption_service.combine_shares(
+            self._encrypted,
+            self._decryption_shares,
+            self._heard_servers
         )
 
         response_message = ResponseMessage(
@@ -170,31 +175,36 @@ class CatchupStateMachine(object):
 
 if __name__ == '__main__':
     from stubs import *
-    server = StubServer()
+    from pake2plus.util import number_to_bytes, bytes_to_number
+    servers = [StubServer(i) for i in [0, 1, 2, 3, 4, 5]]
 
-    client_msg = PutMessage("brendon", "sec", 1001, server.signature_service)
-    put_state_machine = PutStateMachine(client_msg, server)
+    secret = 4720180751612715235271090812360374322170044808629075413983095821158821133441
+    secret = str(number_to_bytes(secret, 2 ** 256 - 1))
+    encrypted = servers[0].threshold_encryption_service.encrypt(secret)
+
+    client_msg = PutMessage("brendon", secret, 1001, servers[0].signature_service)
+    put_state_machine = PutStateMachine(client_msg, servers[0])
 
     for i in xrange(6):
         put_accept_msg = PutAcceptMessage(
-            client_msg, i, server.signature_service
+            client_msg, i, servers[0].signature_service
         )
         print "Send Put ", i
         put_state_machine.handle_message(put_accept_msg)
 
     print ""
 
-    client_msg = GetMessage("brendon", 1001, server.signature_service)
+    client_msg = GetMessage("brendon", 1001, servers[0].signature_service)
 
-    get_state_machine = GetStateMachine(client_msg, server)
+    get_state_machine = GetStateMachine(client_msg, servers[0])
 
     for i in xrange(6):
-        decryption_share = "password"
+        decryption_share = servers[i].threshold_encryption_service.decrypt(encrypted)
         decryption_share_msg = DecryptionShareMessage(
             decryption_share,
-            i,
+            servers[i].id,
             client_msg,
-            server.signature_service
+            servers[i].signature_service
         )
         print "Send Decryption Share", i
         get_state_machine.handle_message(decryption_share_msg)
