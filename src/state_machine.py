@@ -6,6 +6,10 @@ from message import PutMessage
 from message import PutAcceptMessage
 from message import PutCompleteMessage
 from message import GetResponseMessage
+from message import LoginRequest
+from message import LoginResponse
+from message import EnrollRequest
+from message import EnrollResponse
 
 
 class StateMachine(object):
@@ -17,9 +21,10 @@ class StateMachine(object):
 
 
 class ClientPutStateMachine(object):
-    def __init__(self, server):
+    def __init__(self, enroll_request, server):
         self._responses = []
         self._server = server
+        self._enroll_request = enroll_request
 
     def handle_message(self, message):
         assert isinstance(message, PutCompleteMessage)
@@ -28,14 +33,18 @@ class ClientPutStateMachine(object):
             self._responses.append(message.sender_id)
 
             if len(self._responses) > self._server.f + 1:
-                # Done
-                pass
+                enroll_response = EnrollResponse(
+                    self._enroll_request.username,
+                    self._enroll_request.timestamp)
+                self._server.messaging_service.send(
+                        enroll_response, self._enroll_request.user_id)
 
 
 class ClientGetStateMachine(object):
-    def __init__(self, server):
+    def __init__(self, login_request, server):
         self._responses = []
         self._server = server
+        self._login_request = login_request
 
     def handle_message(self, message):
         assert isinstance(message, ResponseMessage)
@@ -43,9 +52,16 @@ class ClientGetStateMachine(object):
         if message.sender_id not in self._responses:
             self._responses.append(message.sender_id)
 
+            # TODO: Check f + 1 SAME
             if len(self._responses) > self._server.f + 1:
-                # Done
-                pass
+                # TODO: do PAKE
+                v = 0
+                encrypted = "lol"
+                login_response = LoginResponse(
+                    self._login_request.username, v,
+                    encrypted, self._login_request.timestamp)
+                self._server.messaging_service.send(
+                        login_response, self._login_request.user_id)
 
 
 class PutStateMachine(object):
