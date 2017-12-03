@@ -1,9 +1,16 @@
 import abc
 import json
-
+from tpke import serialize
 
 class Message(object):
     __metaclass__ = abc.ABCMeta
+
+    def set_signature(self, signature_service=None, signature=None):
+        assert signature_service or signature
+        if signature:
+            self._signature = signature
+        else:
+            self._signature = signature_service.sign(self.data)
 
     @abc.abstractmethod
     def verify_signatures(self, signature_service):
@@ -23,6 +30,11 @@ class Message(object):
         """Returns JSON version of this message (unicode)"""
         raise NotImplementedError()
 
+    @property
+    def data(self):
+        """Returns raw data of this message (not including the signature)"""
+        raise NotImplementedError()
+
     @classmethod
     def from_json(cls, json_str):
         """Returns the correct Message subclass from the json.
@@ -37,7 +49,23 @@ class Message(object):
         msg = json.loads(json_str)
         if msg["type"] == "INTRO":
             return IntroMessage.from_json(json_str)
-
+        elif msg["type"] == "GET":
+            return GetMessage.from_json(json_str)
+        elif msg["type"] == "DECRYPTION_SHARE":
+            return DecryptionShareMessage.from_json(json_str)
+        elif msg["type"] == "RESPONSE":
+            return ResponseMessage.from_json(json_str)
+        elif msg["type"] == "PUT":
+            return PutMessage.from_json(json_str)
+        elif msg["type"] == "PUT_ACCEPT":
+            return PutAcceptMessage.from_json(json_str)
+        elif msg["type"] == "PUT_COMPLETE":
+            return PutCompleteMessage.from_json(json_str)
+        elif msg["type"] == "CATCH_UP_REQUEST":
+            return CatchUpRequestMessage.from_json(json_str)
+        elif msg["type"] == "CATCH_UP_RESPONSE":
+            return CatchUpResponseMessage.from_json(json_str)
+        assert False, "Unidentifiable type %s" % msg["type"]
 
 class IntroMessage(Message):
     def __init__(self, uuid):
@@ -55,9 +83,8 @@ class IntroMessage(Message):
     def verify_signatures(self, signature_service):
         raise NotImplementedError("no")
 
-
 class GetMessage(Message):
-    def __init__(self, key, client_id, signature_service):
+    def __init__(self, key, client_id, signature_service=None, signature=None):
         """Constructs message
 
         Args:
@@ -67,6 +94,8 @@ class GetMessage(Message):
         """
         self._key = key
         self._client_id = client_id
+        self.set_signature(signature_service, signature)
+
         # TODO sign, timestamp
 
     @property
@@ -81,15 +110,28 @@ class GetMessage(Message):
     def client_id(self):
         return self._client_id
 
+    @property
+    def data(self):
+        return "".join([self._key, str(self._client_id)])
+
     def verify_signatures(self, signature_service):
-        pass
+        return signature_service.validate(self.data, self._client_id, self._signature)
 
     def to_json(self):
-        pass
+        return json.dumps({
+            type: "GET", 
+            key: self._key, 
+            client_id: self._client_id, 
+            signature: self._signature})
 
+    @classmethod
+    def from_json(cls, json_str):
+        msg_dict = json.loads(json_str)
+        assert msg_dict["type"] == "GET"
+        return GetMessage(msg_dict["key"], msg_dict["client_id"], signature=msg_dict["signature"])
 
 class DecryptionShareMessage(Message):
-    def __init__(self, decryption_share, sender_id, get_message, signature_service):
+    def __init__(self, decryption_share, sender_id, get_message, signature_service=None, signature=None):
         """Constructs
 
         Args:
@@ -101,6 +143,7 @@ class DecryptionShareMessage(Message):
         self._decryption_share = decryption_share
         self._sender_id = sender_id
         self._get_message = get_message
+        self.set_signature(signature_service, signature)
         # TODO sign
 
     @property
@@ -123,16 +166,35 @@ class DecryptionShareMessage(Message):
     def sender_id(self):
         return self._sender_id
 
+    @property
+    def data(self):
+        return "".join([serialize(self._decryption_share)
+                        str(self._sender_id), 
+                        self._get_message.data, self._get_message._signature])
+
     def verify_signatures(self, signature_service):
-        pass
+        return self._get_message.verify_signatures(signatures) and
+                signature_service.validate(self.data, self._sender_id, self._signature)
 
     def to_json(self):
-        pass
+        return json.dumps({
+            type: "DECRYPTION_SHARE",
+            decryption_share = self._decryption_share,
+            sender_id: self._sender_id,
+            get_message: self._get_message.to_json(),
+            signature: self._signature})
 
+    @classmethod
+    def from_json(cls, json_str):
+        msg_dict = json.loads(json_str)
+        assert msg_dict["type"] == "DECRYPTION_SHARE"
+        get_message = from_json(cls, msg_dict["get_message"])
+        return DecryptionShareMessage(msg_dict["decryption_share"], msg_dict["sender_id"], 
+                    get_message, signature=msg_dict["signature"])
 
 # TODO: Better name
 class ResponseMessage(Message):
-    def __init__(self, secret, sender_id, signature_service):
+    def __init__(self, secret, sender_id, signature_service=None, signature=None):
         """Constructs
 
         Args:
@@ -142,6 +204,7 @@ class ResponseMessage(Message):
         """
         self._secret = secret
         self._sender_id = sender_id
+        self.set_signature(signature_service, signature)
         # TODO sign timestamp
 
     @property
@@ -152,15 +215,28 @@ class ResponseMessage(Message):
     def sender_id(self):
         return self._sender_id
 
+    @property
+    def data(self):
+        return "".join(["".join(self._secret), str(self._sender_id)])
+
     def verify_signatures(self, signature_service):
-        pass
+        return signature_service.validate(self.data, self._sender_id, self._signature)
 
     def to_json(self):
-        pass
+        return json.dumps({
+            type: "RESPONSE",
+            secret: self._secret,
+            sender_id: self._sender_id,
+            signature: self._signature})
 
+    @classmethod
+    def from_json(cls, json_str):
+        msg_dict = json.loads(json_str)
+        assert msg_dict["type"] == "RESPONSE"
+        return ResponseMessage(msg_dict["secret"], msg_dict["sender_id"], signature=msg_dict["signature"])
 
 class PutMessage(Message):
-    def __init__(self, key, secret, client_id, signature_service):
+    def __init__(self, key, secret, client_id, signature_service, signature_service=None, signature=None):
         """Client broadcasts this to servers to store new secret.
 
         Args:
@@ -172,6 +248,7 @@ class PutMessage(Message):
         self._key = key
         self._secret = secret
         self._client_id = client_id
+        self.set_signature(signature_service, signature)
         # TODO sign timestampe
 
     @property
@@ -189,6 +266,8 @@ class PutMessage(Message):
     @property
     def client_id(self):
         return self._client_id
+
+
 
     def verify_signatures(self, signature_service):
         pass
