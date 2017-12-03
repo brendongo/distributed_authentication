@@ -61,7 +61,7 @@ class PutStateMachine(object):
 
     def handle_message(self, message):
         assert type(message) is PutMessage or type(message) is PutAcceptMessage
-        assert message.verify_signatures(self._server.signature_service)
+        # assert message.verify_signatures(self._server.signature_service)
 
         # Broadcast put_accept once
         if not self._sent_accept:
@@ -136,7 +136,7 @@ class GetStateMachine(object):
     def handle_message(self, message):
         assert (type(message) is GetMessage or
                 type(message) is DecryptionShareMessage)
-        assert (message.verify_signature(self._server.signature_service))
+        # assert (message.verify_signatures(self._server.signature_service))
 
         if not self._sent_share:
             self._broadcast_decryption_share()
@@ -184,19 +184,19 @@ if __name__ == '__main__':
     secret = str(number_to_bytes(secret, 2 ** 256 - 1))
     encrypted = servers[0].threshold_encryption_service.encrypt(secret)
 
-    client_msg = PutMessage("brendon", secret, 1001, servers[0].signature_service)
+    client_msg = PutMessage("brendon", secret, 5, servers[5].signature_service)
     put_state_machine = PutStateMachine(client_msg, servers[0])
 
-    for i in xrange(6):
+    for i in xrange(1, 6):
         put_accept_msg = PutAcceptMessage(
-            client_msg, i, servers[0].signature_service
+            client_msg, i, servers[i].signature_service
         )
         print "Send Put ", i
         put_state_machine.handle_message(put_accept_msg)
 
     print ""
 
-    client_msg = GetMessage("brendon", 1001, servers[0].signature_service)
+    client_msg = GetMessage("brendon", 5, servers[5].signature_service)
 
     get_state_machine = GetStateMachine(client_msg, servers[0])
 

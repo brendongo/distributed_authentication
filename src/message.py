@@ -178,7 +178,7 @@ class DecryptionShareMessage(Message):
                         self._get_message.data, self._get_message._signature])
 
     def verify_signatures(self, signature_service):
-        return (self._get_message.verify_signatures(signatures) and
+        return (self._get_message.verify_signatures(signature_service) and
                 signature_service.validate(self.data, self._sender_id, self._signature))
 
     def to_json(self):
