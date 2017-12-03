@@ -1,15 +1,22 @@
+import argparse
+import asyncore
 import message
 import socket
 import threading
 from state_machine import ClientGetStateMachine, ClientPutStateMachine
 from messaging_service import MessagingService, Address
+from message import LoginRequest
+from signature_service import SignatureService
 
 
 class ApplicationClient(object):
-    def __init__(self, server_ports, signature_service, client_id):
+    def __init__(self, server_ports, client_id):
         self._state_machines = {}
 
-        ADDRESSES = [Address(port - 8001, port, 'localhost', True)] for
+        self._signature_service = SignatureService(client_id)
+        self._id = client_id
+
+        ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
                      port in xrange(8001, 8008)]
         ADDRESSES += [Address(7, 8008, 'localhost', False)]
         self._messaging_service = MessagingService(ADDRESSES, self)
@@ -17,15 +24,23 @@ class ApplicationClient(object):
 
     @property
     def id(self):
-        return 7
+        return self._id
 
     @property
     def port(self):
-        return 8008
+        return self._id + 8001
 
     @property
     def hostname(self):
         return 'localhost'
+
+    @property
+    def signature_service(self):
+        return self._signature_service
+
+    @property
+    def messaging_service(self):
+        return self._messaging_service
 
     def handle_message(self, msg):
         if not msg.verify_signatures(self._signature_service):
@@ -35,12 +50,10 @@ class ApplicationClient(object):
             key = (msg.username, msg.timestamp, "LOGIN")
             state_machine = self._state_machines[key] = \
                     ClientGetStateMachine(msg, self)
-            state_machine.handle_message(msg)
         elif isinstance(msg, message.EnrollRequest):
             key = (msg.username, msg.timestamp, "ENROLL")
             state_machine = self._state_machines[key] = \
                     ClientPutStateMachine(msg, self)
-            state_machine.handle_message(msg)
         elif isinstance(msg, message.GetResponseMessage):
             key = (msg.get_msg.key, msg.get_msg.timestamp, "LOGIN")
             state_machine = self._state_machines[key]
@@ -56,8 +69,10 @@ class ApplicationClient(object):
 
 
 class User(object):
-    def __init__(self, application_client_port):
-        ADDRESSES = [Address(7, 8008, 'localhost', False)]
+    def __init__(self, client_id):
+        self._callbacks = {}
+        self._client_id = client_id
+        ADDRESSES = [Address(client_id, client_id + 8001, 'localhost', True)]
         self._messaging_service = MessagingService(ADDRESSES, self)
 
         thread = threading.Thread(target=asyncore.loop)
@@ -76,26 +91,50 @@ class User(object):
     def hostname(self):
         return 'localhost'
 
-    def login(self, username, callback):
-        # Make a call to MessagingService, send a GetRequest to ApplicationClient
+    @property
+    def signature_service(self):
+        return self._signature_service
+
+    @property
+    def messaging_service(self):
+        return self._messaging_service
+
+    def login(self, username, password, callback):
+        # Make a call to MessagingService, send a GetRequest to
+        # ApplicationClient
         # Returns immediately
 
         # Assign request an id, put it in the msg
         #self._callbacks[transaction_id] = callback
-        pass
+        u = 0
+        l = LoginRequest(username, u, self.id)
+        self._callbacks[(username, l.timestamp)] = callback
+        self._messaging_service.send(l, self._client_id)
 
     def enroll(self, username, password, callback):
         pass
 
     def handle_message(self, msg):
+        if isinstance(msg, LoginResponse):
+            self._callbacks[(msg.username, msg.timestamp)](msg)
         #if msg.type == "GET":
         #    self._callbacks[msg.transaction_id](msg.value)
         #else:
         #    self._callbacks[msg.transaction_id]()
 
-user = User()
-for _ in xrange(10000):
-    user.put("bdon", _, timer_callback)
 
-for _ in xrange(10000):
-    user.get("bdon", timer_callback)
+def printo(msg):
+    print msg.to_json()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("user", type=int)
+    args = parser.parse_args()
+    print args
+    if args.user == 8:
+        user = User(7)
+        import time
+        time.sleep(1)
+        user.login("bdon", "bdon", printo)
+    elif args.user == 7:
+        client = ApplicationClient(None, 7)

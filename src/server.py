@@ -28,10 +28,11 @@ class Server(object):
         self._f = 2
         self._state_machines = {}
 
-        PORTS = [8001, 8002, 8003]
+        PORTS = xrange(8001, 8008)
         from messaging_service import MessagingService, Address
         ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
                      port in PORTS]
+        ADDRESSES += [Address(7, 8008, 'localhost', False)]
         self._messaging_service = MessagingService(ADDRESSES, self)
         asyncore.loop()
 
@@ -80,7 +81,7 @@ class Server(object):
         pass
 
     @property
-    def secrets_log(self):
+    def secrets_db(self):
         return self._secrets_db
 
     @property

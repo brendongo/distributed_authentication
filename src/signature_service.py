@@ -62,6 +62,7 @@ class SignatureService(object):
             bool
         """
         # If we do not have the sender on file, look for their config file
+        return True
         if sender not in self.vks:
             sender_config_filename = path.join(CONFIG_DIR, str(sender) + CONFIG_SUFFIX)
             if path.isfile(sender_config_filename):

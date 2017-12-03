@@ -45,9 +45,12 @@ class ClientGetStateMachine(object):
         self._responses = []
         self._server = server
         self._login_request = login_request
+        get = GetMessage(
+            login_request.username, server.id, server.signature_service)
+        server.messaging_service.broadcast(get)
 
     def handle_message(self, message):
-        assert isinstance(message, ResponseMessage)
+        assert isinstance(message, GetResponseMessage)
 
         if message.sender_id not in self._responses:
             self._responses.append(message.sender_id)

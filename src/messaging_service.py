@@ -2,6 +2,8 @@ import asyncore
 import json
 import parser
 import socket
+import traceback
+import sys
 from message import Message, IntroMessage
 from server import Server
 
@@ -78,11 +80,13 @@ class MessagingService(asyncore.dispatcher):
         if destination_id not in self._sockets:
             for addr in self._addresses:
                 if addr.id == destination_id:
+                    print "Tryna connect to: {} {} {}".format(addr.hostname, addr.port, addr.id)
                     self.add_socket(Socket(
                         self._server, self, (addr.hostname, addr.port),
                         addr.id))
         print "Sending a message to: {}".format(destination_id)
-        self._sockets[destination_id].send(message)
+        print "Sent: {}".format(message)
+        self._sockets[destination_id].send(message.to_json())
 
     def broadcast(self, message):
         """Send message to all servers
@@ -143,10 +147,11 @@ class Socket(asyncore.dispatcher_with_send):
         if not data:
             return
         msg = Message.from_json(data)
+        print "Received: {}".format(msg.to_json())
         if isinstance(msg, IntroMessage):
             self._messaging_service.add_socket(self, msg.id)
         else:
-            pass  # Send it to the server
+            self._server.handle_message(msg)
 
     def handle_connect(self):
         print "handle_connect"
@@ -154,13 +159,17 @@ class Socket(asyncore.dispatcher_with_send):
         print "Sending: {}".format(IntroMessage(self._server.id).to_json())
         self.send(IntroMessage(self._server.id).to_json())
 
+    def handle_error(self):
+        traceback.print_exc(sys.stderr)
+        self.close()
+
 
 if __name__ == "__main__":
     import argparse
     import time
 
-    PORTS = [8001, 8002, 8003]
-    ADDRESSES = [Address(port - 8000, port, 'localhost', True) for
+    PORTS = [8001, 8002, 8003, 8004, 8005, 8006, 8007]
+    ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
                  port in PORTS]
     parser = argparse.ArgumentParser()
     parser.add_argument("port_index", type=int)
