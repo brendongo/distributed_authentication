@@ -99,6 +99,7 @@ class PutStateMachine(object):
 
     def _send_put_complete(self):
         put_complete_msg = PutCompleteMessage(
+            self._client_msg,
             self._server.id,
             self._server.signature_service
         )
@@ -137,7 +138,7 @@ class GetStateMachine(object):
             client_msg (GetMessage): message that this is handling
             server (Server)
         """
-        assert type(client_msg) is GetMessage
+        assert isinstance(client_msg, GetMessage)
 
         self._sent_share = False
         self._client_msg = client_msg
@@ -170,6 +171,7 @@ class GetStateMachine(object):
         )
 
         response_message = GetResponseMessage(
+            self._client_msg,
             secret,
             self._server.id,
             self._server.signature_service
