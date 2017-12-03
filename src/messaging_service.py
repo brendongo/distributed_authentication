@@ -3,6 +3,7 @@ import json
 import parser
 import socket
 from message import Message, IntroMessage
+from server import Server
 
 
 class Address(object):
@@ -55,6 +56,7 @@ class MessagingService(asyncore.dispatcher):
         # split out clients and servers
         self._server_addresses = [addr for addr in addresses if addr.server]
         self._addresses = addresses
+        self._server = server
 
         self._sockets = {}
         for addr in self._server_addresses:
@@ -97,7 +99,8 @@ class MessagingService(asyncore.dispatcher):
         if pair is not None:
             sock, addr = pair
             print 'Incoming connection from %s' % repr(pair)
-            s = Socket(server, self, sock=sock)
+            s = Socket(self._server, self, sock=sock)
+            print "Connection handled!"
             #s.send("Accepted connection from: {}".format(addr))
             #s.send("We did it!")
 
@@ -110,9 +113,6 @@ class MessagingService(asyncore.dispatcher):
         """
         print "Adding socket: {}".format(uuid)
         self._sockets[uuid] = s
-
-    def handle_error(self, typ, value, traceback):
-        print traceback
 
 
 class Socket(asyncore.dispatcher_with_send):
@@ -158,19 +158,10 @@ if __name__ == "__main__":
     import argparse
     import time
 
-    class ServerStub(object):
-        def __init__(self, port):
-            self.port = port
-            self.id = port - 8000
-            self.hostname = 'localhost'
-
     PORTS = [8001, 8002, 8003]
     ADDRESSES = [Address(port - 8000, port, 'localhost', True) for
                  port in PORTS]
     parser = argparse.ArgumentParser()
     parser.add_argument("port_index", type=int)
     args = parser.parse_args()
-    server = ServerStub(PORTS[args.port_index])
-    service = MessagingService(ADDRESSES, server)
-    asyncore.loop()
-    time.sleep(5)
+    server = Server(args.port_index)

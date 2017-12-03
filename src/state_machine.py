@@ -210,5 +210,3 @@ if __name__ == '__main__':
         )
         print "Send Decryption Share", i
         get_state_machine.handle_message(decryption_share_msg)
-
-

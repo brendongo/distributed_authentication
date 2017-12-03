@@ -1,3 +1,4 @@
+import asyncore
 from signature_service import SignatureService
 from threshold_encryption_service import ThresholdEncryptionService
 from signature_service import SignatureService
@@ -15,12 +16,17 @@ class Server(object):
         self._id = uid
         self._signature_service = SignatureService(uid)
         self._threshold_encryption_service = ThresholdEncryptionService(
-            'thenc8_2.keys',
-            uid
-        )
+            'thenc8_2.keys', uid)
         self._secrets_db = SecretsDB('secrets' + str(uid) + 'db')
         self._N = 7
         self._f = 2
+
+        PORTS = [8001, 8002, 8003]
+        from messaging_service import MessagingService, Address
+        ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
+                     port in PORTS]
+        self._messaging_service = MessagingService(ADDRESSES, self)
+        asyncore.loop()
 
 
     def handle_message(self, msg):
@@ -32,15 +38,15 @@ class Server(object):
 
     @property
     def port(self):
-        pass
+        return self.id + 8001
 
     @property
     def hostname(self):
-        pass
+        return 'localhost'
 
     @property
     def messaging_service(self):
-        pass
+        return self._messaging_service
 
     @property
     def threshold_encryption_service(self):
