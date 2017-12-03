@@ -14,8 +14,7 @@ class SignatureService(object):
         Args:
             id (int):
         """ 
-        # Create your own config file if it doesn't exist
- 
+        # Create your own config file if it doesn't exist 
         self.server_id = server_id
         own_config_filename = path.join(CONFIG_DIR, str(server_id) + CONFIG_SUFFIX)
         if not path.isfile(own_config_filename):
