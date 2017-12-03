@@ -1,3 +1,5 @@
+from signature_service import SignatureService
+
 class Server(object):
     def __init__(self, config_filename):
         """
@@ -6,7 +8,7 @@ class Server(object):
                 signature private key, signature public keys, location info
                 about servers, server id
         """
-        pass
+        self.signature_service = SignatureService(self.id)
 
     def handle_message(self, msg):
         pass
@@ -33,7 +35,7 @@ class Server(object):
 
     @property
     def signature_service(self):
-        pass
+        return self.signature_service
 
     @property
     def write_ahead_log(self):
