@@ -193,9 +193,8 @@ class DecryptionShareMessage(Message):
     def from_json(cls, json_str):
         msg_dict = json.loads(json_str)
         assert msg_dict["type"] == "DECRYPTION_SHARE"
-        get_message = from_json(cls, msg_dict["get_message"])
         return DecryptionShareMessage(msg_dict["decryption_share"], msg_dict["sender_id"], 
-                    get_message, signature=msg_dict["signature"])
+                    msg_dict["get_message"], signature=msg_dict["signature"])
 
 # TODO: Better name
 class ResponseMessage(Message):
@@ -222,7 +221,7 @@ class ResponseMessage(Message):
 
     @property
     def data(self):
-        return "".join(["".join(self._secret), str(self._sender_id)])
+        return "".join([self._secret, str(self._sender_id)])
 
     def verify_signatures(self, signature_service):
         return signature_service.validate(self.data, self._sender_id, self._signature)
@@ -241,7 +240,7 @@ class ResponseMessage(Message):
         return ResponseMessage(msg_dict["secret"], msg_dict["sender_id"], signature=msg_dict["signature"])
 
 class PutMessage(Message):
-    def __init__(self, key, secret, client_id, signature_service, signature_service=None, signature=None):
+    def __init__(self, key, secret, client_id, signature_service=None, signature=None):
         """Client broadcasts this to servers to store new secret.
 
         Args:
@@ -272,21 +271,28 @@ class PutMessage(Message):
     def client_id(self):
         return self._client_id
 
-
+    @property data(self):
+        return "".join([self._key, self._secret, str(self._client_id)])
 
     def verify_signatures(self, signature_service):
-        pass
+        return signature_service.validate(self.data, self._client_id, self._signature)
 
     def to_json(self):
-        pass
+        return json.dumps({
+            type: "PUT",
+            key: self._key,
+            secret: self._secret,
+            client_id: self._client_id,
+            signature: self._signature})
 
     @classmethod
     def from_json(cls, json_str):
-        pass
-
+        msg_dict = json.loads(json_str)
+        assert msg_dict["type"] == PUT
+        return PutMessage(msg_dict["key"], msg_dict["secret"], msg_dict["client_id"], signature=msg_dict["signature"])
 
 class PutAcceptMessage(Message):
-    def __init__(self, put_message, sender_id, signature_service):
+    def __init__(self, put_message, sender_id, signature_service=None, signature=None):
         """Servers broadcast this to each other on accepting a PutMessage.
 
         Args:
@@ -296,6 +302,7 @@ class PutAcceptMessage(Message):
         """
         self._put_message = put_message
         self._sender_id = sender_id
+        self.set_signature(signature_service, signature)
         # TODO sign
 
     @property
@@ -318,19 +325,29 @@ class PutAcceptMessage(Message):
     def sender_id(self):
         return self._sender_id
 
+    @property
+    def data(self):
+        return "".join([self._put_message.data, self._put_message._signature, str(self._sender_id)])
+
     def verify_signatures(self, signature_service):
-        pass
+        return self._put_message.verify_signatures(signature_service) and
+            signature_service.validate(self.data, self._sender_id, self._signature)
 
     def to_json(self):
-        pass
+        return json.dumps({
+            type: "PUT_ACCEPT",
+            put_message: self._put_message.to_json(),
+            sender_id: self._sender_id,
+            signature: self._signature})
 
     @classmethod
     def from_json(cls, json_str):
-        pass
-
+        msg_dict = json.loads(json_str)
+        assert msg_dict["type"] == "PUT_ACCEPT"
+        return PutAcceptMessages(msg_dict["put_message"], msg_dict["sender_id"], signature=msg_dict["signature"])
 
 class PutCompleteMessage(Message):
-    def __init__(self, sender_id, signature_service):
+    def __init__(self, sender_id, signature_service=None, signature=None):
         """Send this when you receive 2f + 1 PutAcceptMessages
 
         Args:
@@ -338,25 +355,34 @@ class PutCompleteMessage(Message):
             signature_service (SignatureService)
         """
         self._sender_id = sender_id
+        self.set_signature(signature_service, signature)
         # TODO sign, timestamp
 
     @property
     def sender_id(self):
         return self._sender_id
 
+    @property
+    def data(self):
+        return str(self._sender_id)
+
     def verify_signatures(self, signature_service):
-        pass
+        signature_service.validate(self.data, self._sender_id, self._signature)
 
     def to_json(self):
-        pass
+        return json.dumps({
+            type: "PUT_COMPLETE",
+            sender_id: self._sender_id,
+            signature: self._signature})
 
     @classmethod
     def from_json(cls, json_str):
         msg_dict = json.loads(json_str)
-
+        assert msg_dict["type"] == "PUT_COMPLETE"
+        return PutCompleteMessage(msg_dict["sender_id"], signature=msg_dict["signature"])
 
 class CatchUpRequestMessage(Message):
-    def __init__(self, timestamps, sender_id, signature_service):
+    def __init__(self, timestamps, sender_id, signature_service=None, signature=None):
         """Send this when you reboot and need to learn about new puts that you
         didn't receive.
 
@@ -366,26 +392,38 @@ class CatchUpRequestMessage(Message):
             sender_id (int)
             signature_service (SignatureService)
         """
-        pass
+
+        # TODO: WHAT TO DO WITH TIMESTAMPS??
+        self._sender_id = sender_id
+        self.set_signature(signature_service, signature)
 
     @property
     def sender_id(self):
-        pass
+        return self._sender_id
 
     @property
     def timestamps(self):
-        pass
+        return self._timestamps
+
+    @property
+    def data(self):
+        return "".join([])
+        return str(self.sender_id)
 
     def verify_signatures(self, signature_service):
-        pass
+        return signature_service.validate(self.data, self._sender_id, self._signature)
 
     def to_json(self):
-        pass
+        return json.dumps({
+            type: "CATCH_UP_REQUEST",
+            sender_id: self._sender_id,
+            signature: self._signature})
 
     @classmethod
     def from_json(cls, json_str):
-        pass
-
+        msg_dict = json.loads(json_str)
+        assert msg_dict["type"] == "CATCH_UP_REQUEST"
+        return CatchUpRequestMessage(None, msg_dict["sender_id"], signature=msg_dict["signature"])
 
 class CatchUpResponseMessage(Message):
     def __init__(self, entries, sender_id, signature_service):
@@ -397,8 +435,6 @@ class CatchUpResponseMessage(Message):
             sender_id (int)
             signature_service (SignatureService)
         """
-        pass
-
     @property
     def sender_id(self):
         pass
