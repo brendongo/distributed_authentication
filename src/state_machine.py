@@ -93,14 +93,6 @@ class PutStateMachine(object):
 
     def handle_message(self, message):
         assert type(message) is PutMessage or type(message) is PutAcceptMessage
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-        # assert message.verify_signatures(self._server.signature_service)
->>>>>>> Stashed changes
-=======
-        # assert message.verify_signatures(self._server.signature_service)
->>>>>>> Stashed changes
 
         # Broadcast put_accept once
         if not self._sent_accept:
@@ -175,14 +167,6 @@ class GetStateMachine(object):
     def handle_message(self, message):
         assert (type(message) is GetMessage or
                 type(message) is DecryptionShareMessage)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-        # assert (message.verify_signature(self._server.signature_service))
->>>>>>> Stashed changes
-=======
-        # assert (message.verify_signature(self._server.signature_service))
->>>>>>> Stashed changes
 
         if not self._sent_share:
             self._broadcast_decryption_share()
