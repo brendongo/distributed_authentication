@@ -137,6 +137,7 @@ class User(object):
 
 
 def printo(msg):
+    print "Operation Successful, bitches"
     print msg.to_json()
 
 if __name__ == "__main__":
@@ -148,9 +149,9 @@ if __name__ == "__main__":
         user = User(7)
         import time
         time.sleep(1)
+        user.enroll("bdon", "bdon", printo)
         print "Sending"
         user.login("bdon", "bdon", printo)
         print "Success!"
-        user.enroll("bdon", "bdon", printo)
     elif args.user == 7:
         client = ApplicationClient(None, 7)

@@ -6,6 +6,7 @@ import traceback
 import sys
 from message import Message, IntroMessage
 from server import Server
+import struct
 
 
 class Address(object):
@@ -86,6 +87,8 @@ class MessagingService(asyncore.dispatcher):
                         addr.id))
         print "Sending a message to: {}".format(destination_id)
         print "Sent: {}".format(message)
+        length = len(message.to_json())
+        self._sockets[destination_id].send(struct.pack('!I', length))
         self._sockets[destination_id].send(message.to_json())
 
     def broadcast(self, message):
@@ -122,7 +125,7 @@ class MessagingService(asyncore.dispatcher):
 
 class Socket(asyncore.dispatcher_with_send):
     """Two-way connection between server and client / server
-    
+
     Args:
         addr (int): ip address
         sock (socket)
@@ -138,11 +141,20 @@ class Socket(asyncore.dispatcher_with_send):
             self.connect(addr)
         self._server = server
         self._messaging_service = messaging_service
+        self._next_segment_length = 0
 
     def handle_read(self):
         """Receives data"""
         print "Handle_read"
-        data = self.recv(8192)
+
+        if self._next_segment_length:
+            data = self.recv(self._next_segment_length)
+            self._next_segment_length = 0
+        else:
+            data = self.recv(4)
+            self._next_segment_length, = struct.unpack('!I', data)
+            return
+
         if not data:
             return
         msg = Message.from_json(json.loads(data))
@@ -157,6 +169,9 @@ class Socket(asyncore.dispatcher_with_send):
         print "handle_connect"
         print IntroMessage(self._server.id).to_json()
         print "Sending: {}".format(IntroMessage(self._server.id).to_json())
+
+        length = len(IntroMessage(self._server.id).to_json())
+        self.send(struct.pack('!I', length))
         self.send(IntroMessage(self._server.id).to_json())
 
     def handle_error(self):
