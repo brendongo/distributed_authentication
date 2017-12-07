@@ -11,19 +11,21 @@ class SecretsDB(object):
 
     def get(self, key):
         self._cursor.execute("SELECT * FROM secrets WHERE key=?", (key,))
-        key, U, V = self._cursor.fetchone()
+        key, pi_0_U, pi_0_V, c_U, c_V = self._cursor.fetchone()
 
-        U = deserialize1(U)
+        pi_0_U = deserialize1(pi_0_U)
+        c_U = deserialize1(c_U)
 
-        threshold_secret = (U, V, None)
-        return threshold_secret
+        return ((pi_0_U, pi_0_V, None), (c_U, c_V, None))
 
     def put(self, key, threshold_secret):
-        U, V, W = threshold_secret
+        pi_0_U, pi_0_V, _ = threshold_secret[0]
+        c_U, c_V, _ = threshold_secret[1]
 
-        U = serialize(U)
+        pi_0_U = serialize(pi_0_U)
+        c_U = serialize(c_U)
 
-        self._cursor.execute("INSERT INTO secrets VALUES (?,?,?)", (key, U, V))
+        self._cursor.execute("INSERT INTO secrets VALUES (?,?,?,?,?)", (key, pi_0_U, pi_0_V, c_U, c_V))
         self._conn.commit()
 
     def select(self, timestamps):
@@ -41,7 +43,7 @@ if __name__ == '__main__':
         conn = sqlite3.connect('databases/secrets' + str(i) + 'db')
         c = conn.cursor()
         c.execute('''CREATE TABLE secrets
-                    (key TEXT, U BLOB, V BLOB)''')
+                    (key TEXT, pi_0_U BLOB, pi_0_V BLOB, c_U BLOB, c_V BLOB)''')
 
     # db = SecretsDB('testdb')
     # db.put("brendon", "eats food")
