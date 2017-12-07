@@ -18,14 +18,15 @@ class ThresholdEncryptionService(object):
 
         Args:
             msg (string): message we want to encrypt
-            limited to 32 bytes
+            has to be to 64 bytes
 
         Return:
             opaque object used by threshold decryption and combine shares
 
         """
-        U, V, W = self._encryp_key.encrypt(msg)
-        return (U, V, None)
+        U, V, W = self._encryp_key.encrypt(msg[:32])
+        U2, V2, _ = self._encryp_key.encrypt(msg[32:])
+        return [(U, V, None), (U2, V2, None)]
 
     def decrypt(self, msg):
         """Takes decryption_shares and turns it into a message.
@@ -36,7 +37,8 @@ class ThresholdEncryptionService(object):
         Returns:
             opaque object used by threshold combine shares
         """
-        return self._secret_key.decrypt_share(msg)
+        return (self._secret_key.decrypt_share(msg[0]),
+                self._secret_key.decrypt_share(msg[1]))
 
     def combine_shares(self, encrypted, decryption_shares, server_ids):
         """Combines encrypted object and decryption shares to get
@@ -53,10 +55,16 @@ class ThresholdEncryptionService(object):
         """
         k = self._encryp_key.k
         decryption_shares = decryption_shares[:k]
+        pi_0_shares = [x[0] for x in decryption_shares]
+        c_shares = [x[1] for x in decryption_shares]
+
         server_ids = server_ids[:k]
-        shares = dict(zip(server_ids, decryption_shares))
-        msg = self._encryp_key.combine_shares(encrypted, shares)
-        return msg
+        pi_shares = dict(zip(server_ids, pi_0_shares))
+        pi_msg = self._encryp_key.combine_shares(encrypted[0], pi_shares)
+        c_shares = dict(zip(server_ids, c_shares))
+        c_msg = self._encryp_key.combine_shares(encrypted[1], c_shares)
+
+        return pi_msg + c_msg
 
 
 if __name__ == '__main__':
@@ -82,10 +90,9 @@ if __name__ == '__main__':
     # Store this
     c = secretB[1]
 
-
     assert pi_0 == secretB[0]
 
-    m = secretB[1]
+    m = pi_0_str + c
 
     service0 = ThresholdEncryptionService('thenc8_2.keys', 0)
     service1 = ThresholdEncryptionService('thenc8_2.keys', 1)
@@ -118,7 +125,10 @@ if __name__ == '__main__':
 
     # Perform the key exchange and verify that both have obtained the same key
     SA = SPAKE2PLUS_A(secretA)
-    SB = SPAKE2PLUS_B(secretB)
+
+    recv_pi_0 = bytes_to_number(m_[:32])
+
+    SB = SPAKE2PLUS_B((recv_pi_0, m_[32:]))
 
     msg_outA = SA.start()
     msg_outB = SB.start()

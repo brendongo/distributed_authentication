@@ -89,7 +89,7 @@ class LoginRequest(Message):
     def to_json(self):
         return json.dumps(
             {"type": "LOGIN",
-             "username": self.username, "u": self.u,
+             "username": self.username, "u": self.u.encode('base-64'),
              "timestamp": self.timestamp, "user_id": self.user_id})
 
     @property
@@ -112,7 +112,7 @@ class LoginRequest(Message):
     def from_json(cls, json_obj):
         assert json_obj["type"] == "LOGIN"
         return cls(
-            json_obj["username"], json_obj["u"], json_obj["user_id"],
+            json_obj["username"], json_obj["u"].decode('base-64'), json_obj["user_id"],
             timestamp=json_obj["timestamp"])
 
     def verify_signatures(self, signature_service=None):
@@ -173,7 +173,7 @@ class LoginResponse(Message):
     def to_json(self):
         return json.dumps(
             {"type": "LOGIN_RESPONSE",
-             "username": self.username, "v": self.v,
+             "username": self.username, "v": self.v.encode('base-64'),
              "encrypted": self.encrypted,
              "timestamp": self.timestamp})
 
@@ -198,7 +198,7 @@ class LoginResponse(Message):
     def from_json(cls, json_obj):
         assert json_obj["type"] == "LOGIN_RESPONSE"
         return cls(
-                json_obj["username"], json_obj["v"],
+                json_obj["username"], json_obj["v"].decode('base-64'),
                 json_obj["encrypted"], json_obj["timestamp"])
 
     def verify_signatures(self, signature_service=None):
@@ -347,7 +347,8 @@ class DecryptionShareMessage(Message):
 
     @property
     def data(self):
-        return "".join([serialize(self._decryption_share).encode('base-64'),
+        return "".join([serialize(self._decryption_share[0]).encode('base-64'),
+                        serialize(self._decryption_share[1]).encode('base-64'),
                         str(self._sender_id),
                         self._get_message.data, self._get_message._signature])
 
@@ -358,7 +359,8 @@ class DecryptionShareMessage(Message):
     def to_json(self):
         return json.dumps({
             "type": "DECRYPTION_SHARE",
-            "decryption_share": serialize(self._decryption_share).encode('base-64'),
+            "decryption_share_1": serialize(self._decryption_share[0]).encode('base-64'),
+            "decryption_share_2": serialize(self._decryption_share[1]).encode('base-64'),
             "sender_id": self._sender_id,
             "get_message": self._get_message.to_json(),
             "signature": self._signature})
@@ -366,7 +368,9 @@ class DecryptionShareMessage(Message):
     @classmethod
     def from_json(cls, json_obj):
         assert json_obj["type"] == "DECRYPTION_SHARE"
-        decryption_share = deserialize1(json_obj["decryption_share"].decode('base-64'))
+        decryption_share_1 = deserialize1(json_obj["decryption_share_1"].decode('base-64'))
+        decryption_share_2 = deserialize1(json_obj["decryption_share_2"].decode('base-64'))
+        decryption_share = (decryption_share_1, decryption_share_2)
         return cls(decryption_share, json_obj["sender_id"],
                    Message.from_json(json.loads(json_obj["get_message"])),
                    signature=json_obj["signature"])
@@ -406,7 +410,7 @@ class GetResponseMessage(Message):
 
     @property
     def data(self):
-        return "".join([self._secret, str(self._sender_id)])
+        return "".join([self._secret.encode('base-64'), str(self._sender_id)])
 
     def verify_signatures(self, signature_service):
         return signature_service.validate(self.data, self._sender_id, self._signature)
@@ -414,7 +418,7 @@ class GetResponseMessage(Message):
     def to_json(self):
         return json.dumps({
             "type": "RESPONSE", "get_msg": self.get_msg.to_json(),
-            "secret": self.secret, "sender_id": self.sender_id,
+            "secret": self._secret.encode('base-64'), "sender_id": self.sender_id,
             "signature": self.signature})
 
     @classmethod
@@ -422,7 +426,7 @@ class GetResponseMessage(Message):
         assert json_obj["type"] == "RESPONSE"
         return cls(
                 Message.from_json(json.loads(json_obj["get_msg"])),
-                json_obj["secret"], json_obj["sender_id"],
+                json_obj["secret"].decode('base-64'), json_obj["sender_id"],
                 signature=json_obj["signature"])
 
 
@@ -463,7 +467,7 @@ class PutMessage(Message):
 
     @property
     def data(self):
-        return "".join([self._key, self._secret, str(self._client_id)])
+        return "".join([self._key, self._secret.encode('base-64'), str(self._client_id)])
 
     def verify_signatures(self, signature_service):
         return signature_service.validate(
@@ -473,7 +477,7 @@ class PutMessage(Message):
         return json.dumps({
             "type": "PUT",
             "key": self._key,
-            "secret": self._secret,
+            "secret": self._secret.encode('base-64'),
             "client_id": self._client_id,
             "signature": self._signature,
             "timestamp": self.timestamp})
@@ -482,7 +486,7 @@ class PutMessage(Message):
     def from_json(cls, json_obj):
         assert json_obj["type"] == "PUT"
         return cls(
-            json_obj["key"], json_obj["secret"], json_obj["client_id"],
+            json_obj["key"], json_obj["secret"].decode('base-64'), json_obj["client_id"],
             signature=json_obj["signature"],
             timestamp=json_obj["timestamp"])
 

@@ -10,6 +10,8 @@ from message import LoginResponse
 from message import EnrollRequest
 from message import EnrollResponse
 from signature_service import SignatureService
+from pake2plus.pake2plus import password_to_secret_A
+from pake2plus.pake2plus import SPAKE2PLUS_A
 
 
 class ApplicationClient(object):
@@ -116,7 +118,10 @@ class User(object):
 
         # Assign request an id, put it in the msg
         #self._callbacks[transaction_id] = callback
-        u = 0
+        secretA = password_to_secret_A(password)
+        SA = SPAKE2PLUS_A(secretA)
+        u = SA.start()
+
         l = LoginRequest(username, u, self.id)
         self._callbacks[(username, l.timestamp)] = callback
         self._messaging_service.send(l, self._client_id)

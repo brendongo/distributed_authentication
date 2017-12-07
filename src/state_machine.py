@@ -10,6 +10,9 @@ from message import LoginRequest
 from message import LoginResponse
 from message import EnrollRequest
 from message import EnrollResponse
+from pake2plus.pake2plus import SPAKE2PLUS_B
+from pake2plus.pake2plus import password_to_secret_B
+from pake2plus.util import number_to_bytes, bytes_to_number
 
 
 class StateMachine(object):
@@ -25,8 +28,15 @@ class ClientPutStateMachine(object):
         self._responses = []
         self._server = server
         self._enroll_request = enroll_request
+
+        # Generate Serverside Pake2+ secret
+        pi_0, c = password_to_secret_B(enroll_request.password.encode('utf-8'))
+
+        pi_0_str = str(number_to_bytes(pi_0, 2 ** (256) - 1))
+        pi_0_str += c
+
         put = PutMessage(
-            enroll_request.username, "-" * 32, server.id, server.signature_service, timestamp=enroll_request.timestamp)
+            enroll_request.username, pi_0_str, server.id, server.signature_service, timestamp=enroll_request.timestamp)
         server.messaging_service.broadcast(put)
         self._sent = False
 
@@ -50,7 +60,7 @@ class ClientPutStateMachine(object):
 
 class ClientGetStateMachine(object):
     def __init__(self, login_request, server):
-        self._responses = []
+        self._responses = {}
         self._server = server
         self._login_request = login_request
         get = GetMessage(
@@ -66,13 +76,22 @@ class ClientGetStateMachine(object):
         assert isinstance(message, GetResponseMessage)
 
         if message.sender_id not in self._responses:
-            self._responses.append(message.sender_id)
+            self._responses[message.sender_id] = message
+
 
             # TODO: Check f + 1 SAME
             if not self._sent and len(self._responses) > self._server.f + 1:
                 # TODO: do PAKE
-                v = 0
-                encrypted = "lol"
+                pi_0_str = self._responses.values()[0].secret
+                pi_0 = bytes_to_number(pi_0_str[:32])
+                c = pi_0_str[32:]
+                encrypted = "lol" # to check if keys are correct
+
+                SB = SPAKE2PLUS_B((pi_0, c))
+                v = SB.start()
+
+                key = SB.finish(self._login_request.u)
+                print "AGREED KEY: {}".format(key)
                 login_response = LoginResponse(
                     self._login_request.username, v,
                     encrypted, self._login_request.timestamp)
@@ -249,6 +268,8 @@ if __name__ == '__main__':
 
     secret = 4720180751612715235271090812360374322170044808629075413983095821158821133441
     secret = str(number_to_bytes(secret, 2 ** 256 - 1))
+    secret += secret
+
     encrypted = servers[0].threshold_encryption_service.encrypt(secret)
 
     client_msg = PutMessage("brendon", secret, 5, servers[5].signature_service)
