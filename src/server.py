@@ -9,7 +9,7 @@ from message import PutMessage
 from message import PutAcceptMessage
 from state_machine import GetStateMachine
 from state_machine import PutStateMachine
-
+from utils import CONSTANTS
 
 class Server(object):
     def __init__(self, uid):
@@ -24,15 +24,15 @@ class Server(object):
         self._threshold_encryption_service = ThresholdEncryptionService(
             'thenc8_2.keys', uid)
         self._secrets_db = SecretsDB('databases/secrets' + str(uid) + 'db')
-        self._N = 7
-        self._f = 2
+        self._N = CONSTANTS.N
+        self._f = CONSTANTS.f
         self._state_machines = {}
 
-        PORTS = xrange(8001, 8008)
+        PORTS = xrange(8001, 8001 + CONSTANTS.N)
         from messaging_service import MessagingService, Address
         ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
                      port in PORTS]
-        ADDRESSES += [Address(7, 8008, 'localhost', False)]
+        ADDRESSES += [Address(7, 8001 + CONSTANTS.N, 'localhost', False)]
         self._messaging_service = MessagingService(ADDRESSES, self)
         asyncore.loop()
 

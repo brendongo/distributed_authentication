@@ -12,6 +12,8 @@ from message import EnrollResponse
 from signature_service import SignatureService
 from pake2plus.pake2plus import password_to_secret_A
 from pake2plus.pake2plus import SPAKE2PLUS_A
+from utils import CONSTANTS
+from timer import Timer
 
 
 class ApplicationClient(object):
@@ -22,8 +24,8 @@ class ApplicationClient(object):
         self._id = client_id
 
         ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
-                     port in xrange(8001, 8008)]
-        ADDRESSES += [Address(7, 8008, 'localhost', False)]
+                     port in xrange(8001, 8001 + CONSTANTS.N)]
+        ADDRESSES += [Address(7, 8001 + CONSTANTS.N, 'localhost', False)]
         self._messaging_service = MessagingService(ADDRESSES, self)
         asyncore.loop()
 
@@ -62,7 +64,6 @@ class ApplicationClient(object):
                     ClientGetStateMachine(msg, self)
         elif isinstance(msg, message.EnrollRequest):
             key = (msg.timestamp, "ENROLL")
-            print "Creating key: {}".format(key)
             state_machine = self._state_machines[key] = \
                     ClientPutStateMachine(msg, self)
         elif isinstance(msg, message.GetResponseMessage):
@@ -73,7 +74,6 @@ class ApplicationClient(object):
         elif isinstance(msg, message.PutCompleteMessage):
             key = (msg.put_msg.timestamp, "ENROLL")
             state_machine = self._state_machines[key]
-            print "Forwarding to: {}".format(state_machine)
             assert state_machine
             state_machine.handle_message(msg)
         else:
@@ -152,11 +152,9 @@ if __name__ == "__main__":
     print args
     if args.user == 8:
         user = User(7)
-        import time
-        time.sleep(1)
-        user.enroll("bdon", "bdon", printo)
-        print "Sending"
-        user.login("bdon", "bdon", printo)
-        print "Success!"
+        num_calls = 100
+        timer = Timer(num_calls)
+        for i in xrange(num_calls):
+            user.enroll(str(i), "bdon", timer.call)
     elif args.user == 7:
         client = ApplicationClient(None, 7)

@@ -6,8 +6,9 @@ import traceback
 import sys
 from message import Message, IntroMessage
 from server import Server
+from buffer import Buffer
 import struct
-
+from utils import CONSTANTS
 
 class Address(object):
     def __init__(self, uuid, port, hostname, server):
@@ -77,19 +78,16 @@ class MessagingService(asyncore.dispatcher):
             destination_id (int)
         """
         # Open new socket if necessary
-        print "Finding {}".format(destination_id)
         if destination_id not in self._sockets:
             for addr in self._addresses:
                 if addr.id == destination_id:
-                    print "Tryna connect to: {} {} {}".format(addr.hostname, addr.port, addr.id)
                     self.add_socket(Socket(
                         self._server, self, (addr.hostname, addr.port),
                         addr.id))
-        print "Sending a message to: {}".format(destination_id)
-        print "Sent: {}".format(message)
         length = len(message.to_json())
-        self._sockets[destination_id].send(struct.pack('!I', length))
-        self._sockets[destination_id].send(message.to_json())
+        print "Sending: {} to {}".format(message, destination_id)
+        self._sockets[destination_id].send(
+                struct.pack('!I', length) + message.to_json())
 
     def broadcast(self, message):
         """Send message to all servers
@@ -106,11 +104,7 @@ class MessagingService(asyncore.dispatcher):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-            print 'Incoming connection from %s' % repr(pair)
             s = Socket(self._server, self, sock=sock)
-            print "Connection handled!"
-            #s.send("Accepted connection from: {}".format(addr))
-            #s.send("We did it!")
 
     def add_socket(self, s, uuid):
         """Adds a socket under uuid.
@@ -119,7 +113,6 @@ class MessagingService(asyncore.dispatcher):
             s (Socket)
             uuid (int): id of the destination
         """
-        print "Adding socket: {}".format(uuid)
         self._sockets[uuid] = s
 
 
@@ -141,35 +134,24 @@ class Socket(asyncore.dispatcher_with_send):
             self.connect(addr)
         self._server = server
         self._messaging_service = messaging_service
-        self._next_segment_length = 0
+        self._buffer = Buffer()
 
     def handle_read(self):
         """Receives data"""
-        print "Handle_read"
+        data = self.recv(8196)
+        self._buffer.write_to(data)
+        while True:
+            msg = self._buffer.read_from()
+            if msg is None:
+                return
 
-        if self._next_segment_length:
-            data = self.recv(self._next_segment_length)
-            self._next_segment_length = 0
-        else:
-            data = self.recv(4)
-            self._next_segment_length, = struct.unpack('!I', data)
-            return
-
-        if not data:
-            return
-        msg = Message.from_json(json.loads(data))
-        print "Received: {}".format(msg.to_json())
-        if isinstance(msg, IntroMessage):
-            self._messaging_service.add_socket(self, msg.id)
-        else:
-            print "Sending to server to handle!"
-            self._server.handle_message(msg)
+            print "Received ({})".format(msg)
+            if isinstance(msg, IntroMessage):
+                self._messaging_service.add_socket(self, msg.id)
+            else:
+                self._server.handle_message(msg)
 
     def handle_connect(self):
-        print "handle_connect"
-        print IntroMessage(self._server.id).to_json()
-        print "Sending: {}".format(IntroMessage(self._server.id).to_json())
-
         length = len(IntroMessage(self._server.id).to_json())
         self.send(struct.pack('!I', length))
         self.send(IntroMessage(self._server.id).to_json())
@@ -183,10 +165,11 @@ if __name__ == "__main__":
     import argparse
     import time
 
-    PORTS = [8001, 8002, 8003, 8004, 8005, 8006, 8007]
+    PORTS = xrange(8001, 8001 + CONSTANTS.N)
     ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
                  port in PORTS]
     parser = argparse.ArgumentParser()
     parser.add_argument("port_index", type=int)
     args = parser.parse_args()
-    server = Server(args.port_index)
+    if args.port_index <= CONSTANTS.N:
+        server = Server(args.port_index)

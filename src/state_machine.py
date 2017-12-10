@@ -47,9 +47,7 @@ class ClientPutStateMachine(object):
         if message.sender_id not in self._responses:
             self._responses.append(message.sender_id)
 
-            print "RECEIVED A NEW ONE!"
-
-            if not self._sent and len(self._responses) > self._server.f + 1:
+            if not self._sent and len(self._responses) >= self._server.f + 1:
                 enroll_response = EnrollResponse(
                     self._enroll_request.username,
                     self._enroll_request.timestamp)
@@ -66,9 +64,6 @@ class ClientGetStateMachine(object):
         get = GetMessage(
             login_request.username, server.id, server.signature_service,
             timestamp=login_request.timestamp)
-        print "LOGIN REQUEST: {}".format(login_request.to_json())
-        print "TIMESTAMP: {}".format(get.timestamp)
-        print "LOGIN REQUEST: {}".format(login_request.to_json())
         server.messaging_service.broadcast(get)
         self._sent = False
 
@@ -80,7 +75,7 @@ class ClientGetStateMachine(object):
 
 
             # TODO: Check f + 1 SAME
-            if not self._sent and len(self._responses) > self._server.f + 1:
+            if not self._sent and len(self._responses) >= self._server.f + 1:
                 # TODO: do PAKE
                 pi_0_str = self._responses.values()[0].secret
                 pi_0 = bytes_to_number(pi_0_str[:32])
@@ -91,7 +86,6 @@ class ClientGetStateMachine(object):
                 v = SB.start()
 
                 key = SB.finish(self._login_request.u)
-                print "AGREED KEY: {}".format(key)
                 login_response = LoginResponse(
                     self._login_request.username, v,
                     encrypted, self._login_request.timestamp)
@@ -108,6 +102,8 @@ class PutStateMachine(object):
         server (Server)
     """
     def __init__(self, client_msg, server):
+        if isinstance(client_msg, PutAcceptMessage):
+            client_msg = client_msg.put_msg
         assert type(client_msg) is PutMessage
 
         self._acceptances = []  # List[server_id]
@@ -174,7 +170,6 @@ class GetStateMachine(object):
             client_msg (GetMessage): message that this is handling
             server (Server)
         """
-        print "NOT A GET MSG: {}".format(client_msg)
         assert isinstance(client_msg, GetMessage)
 
         self._sent_share = False
@@ -279,10 +274,7 @@ if __name__ == '__main__':
         put_accept_msg = PutAcceptMessage(
             client_msg, i, servers[i].signature_service
         )
-        print "Send Put ", i
         put_state_machine.handle_message(put_accept_msg)
-
-    print ""
 
     client_msg = GetMessage("brendon", 5, servers[5].signature_service)
 
@@ -296,5 +288,4 @@ if __name__ == '__main__':
             client_msg,
             servers[i].signature_service
         )
-        print "Send Decryption Share", i
         get_state_machine.handle_message(decryption_share_msg)

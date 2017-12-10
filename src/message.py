@@ -7,8 +7,8 @@ class Message(object):
     __metaclass__ = abc.ABCMeta
 
     def set_signature(self, signature_service=None, signature=None):
-        assert signature_service or signature
-        if signature:
+        #assert signature_service or signature
+        if signature is not None:
             self._signature = signature
         else:
             self._signature = signature_service.sign(self.data)
@@ -46,7 +46,6 @@ class Message(object):
         Returns:
             Message
         """
-        print "JSON: {}".format(json_obj)
         if json_obj["type"] == "INTRO":
             return IntroMessage.from_json(json_obj)
         elif json_obj["type"] == "LOGIN":
@@ -118,6 +117,10 @@ class LoginRequest(Message):
     def verify_signatures(self, signature_service=None):
         return True
 
+    def __str__(self):
+        return "LoginRequest ({})".format(self.username)
+    __repr__ = __str__
+
 
 class EnrollRequest(Message):
     def __init__(self, username, password, user_id, timestamp=None):
@@ -159,6 +162,10 @@ class EnrollRequest(Message):
 
     def verify_signatures(self, signature_service=None):
         return True
+
+    def __str__(self):
+        return "EnrollRequest ({})".format(self.username)
+    __repr__ = __str__
 
 
 class LoginResponse(Message):
@@ -204,6 +211,10 @@ class LoginResponse(Message):
     def verify_signatures(self, signature_service=None):
         return True
 
+    def __str__(self):
+        return "LoginResponse ({})".format(self.username)
+    __repr__ = __str__
+
 
 class EnrollResponse(Message):
     def __init__(self, username, timestamp=None):
@@ -233,6 +244,10 @@ class EnrollResponse(Message):
     def verify_signatures(self, signature_service=None):
         return True
 
+    def __str__(self):
+        return "EnrollResponse ({})".format(self.username)
+    __repr__ = __str__
+
 
 class IntroMessage(Message):
     def __init__(self, uuid):
@@ -252,6 +267,10 @@ class IntroMessage(Message):
 
     def verify_signatures(self, signature_service):
         raise NotImplementedError("no")
+
+    def __str__(self):
+        return "IntroMessage"
+    __repr__ = __str__
 
 
 class GetMessage(Message):
@@ -306,6 +325,10 @@ class GetMessage(Message):
             json_obj["key"], json_obj["client_id"],
             signature=json_obj["signature"],
             timestamp=json_obj["timestamp"])
+
+    def __str__(self):
+        return "GetMessage ({})".format(self.key)
+    __repr__ = __str__
 
 
 class DecryptionShareMessage(Message):
@@ -375,6 +398,10 @@ class DecryptionShareMessage(Message):
                    Message.from_json(json.loads(json_obj["get_message"])),
                    signature=json_obj["signature"])
 
+    def __str__(self):
+        return "DecryptionShareMessage ({})".format(self.key)
+    __repr__ = __str__
+
 
 class GetResponseMessage(Message):
     def __init__(self, get_msg, secret, sender_id,
@@ -429,6 +456,9 @@ class GetResponseMessage(Message):
                 json_obj["secret"].decode('base-64'), json_obj["sender_id"],
                 signature=json_obj["signature"])
 
+    def __str__(self):
+        return "GetResponseMessage ({})".format(self.key)
+    __repr__ = __str__
 
 class PutMessage(Message):
     def __init__(self, key, secret, client_id,
@@ -490,6 +520,10 @@ class PutMessage(Message):
             signature=json_obj["signature"],
             timestamp=json_obj["timestamp"])
 
+    def __str__(self):
+        return "PutMessage ({})".format(self.key)
+    __repr__ = __str__
+
 
 class PutAcceptMessage(Message):
     def __init__(self, put_message, sender_id, signature_service=None,
@@ -526,6 +560,10 @@ class PutAcceptMessage(Message):
         return self._sender_id
 
     @property
+    def put_msg(self):
+        return self._put_message
+
+    @property
     def data(self):
         return "".join(
             [self._put_message.data, self._put_message._signature,
@@ -548,6 +586,10 @@ class PutAcceptMessage(Message):
         return cls(
             Message.from_json(json.loads(json_obj["put_message"])),
             json_obj["sender_id"], signature=json_obj["signature"])
+
+    def __str__(self):
+        return "PutAcceptMessage ({})".format(self.key)
+    __repr__ = __str__
 
 
 class PutCompleteMessage(Message):
@@ -576,6 +618,10 @@ class PutCompleteMessage(Message):
         return self._put_msg
 
     @property
+    def key(self):
+        return self._put_msg.key
+
+    @property
     def data(self):
         return str(self._sender_id)
 
@@ -596,6 +642,10 @@ class PutCompleteMessage(Message):
         return cls(
             Message.from_json(json.loads(json_obj["put_msg"])),
             json_obj["sender_id"], signature=json_obj["signature"])
+
+    def __str__(self):
+        return "PutCompleteMessage ({})".format(self.key)
+    __repr__ = __str__
 
 
 class CatchUpRequestMessage(Message):
