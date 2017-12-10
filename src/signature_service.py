@@ -1,20 +1,73 @@
 from os import path, listdir
 from ecdsa import SigningKey, VerifyingKey, BadSignatureError
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA256
+
 
 CONFIG_DIR = "config"
 CONFIG_SUFFIX = "_signature.config"
 VK_STR_LEN = 48
 SK_STR_LEN = 24
 
+
 class SignatureService(object):
+    def __init__(self, server_id):
+        raise NotImplementedError
+
+    def sign(self, msg):
+        """Sign message with private key
+
+        Args:
+            msg (string)
+
+        Returns:
+            string
+        """
+        raise NotImplementedError
+
+    def validate(self, msg, sender, signature):
+        """Validate signature on message
+
+        Args:
+            msg (string)
+            sender_id (int)
+            signature (string)
+
+        Returns:
+            bool
+        """
+        # If we do not have the sender on file, look for their config file
+        raise NotImplementedError
+
+
+class RSASignatureService(SignatureService):
+    def __init__(self, server_id):
+        all_config_filename = path.join(CONFIG_DIR, "rsakeys.pem")
+        if not path.isfile(all_config_filename):
+            # TODO all servers use the same private public key which is
+            # fine for timing but is very insecure.
+            key = RSA.generate(2048)
+            f = open(all_config_filename, 'w')
+            f.write(key.exportKey('PEM'))
+            f.close()
+
+        f = open(all_config_filename, 'r')
+        self.key = RSA.importKey(f.read())
+
+    def sign(self, msg):
+        digest = SHA256.new(msg).digest()
+        signature = self.key.sign(digest, '')
+        return signature
+
+    def validate(self, msg, sender, signature):
+        digest = SHA256.new(msg).digest()
+        return self.key.publickey().verify(digest, signature)
+
+
+class ECDSASignatureService(SignatureService):
     sk = None
 
     def __init__(self, server_id):
-        """
-        Args:
-            id (int):
-        """ 
-        # Create your own config file if it doesn't exist 
         self.server_id = server_id
         own_config_filename = path.join(CONFIG_DIR, str(server_id) + CONFIG_SUFFIX)
         if not path.isfile(own_config_filename):
@@ -40,28 +93,9 @@ class SignatureService(object):
         assert self.sk # Make sure that you know your own secret key
 
     def sign(self, msg):
-        """Sign message with private key
-
-        Args:
-            msg (string)
-
-        Returns:
-            string
-        """
         return self.sk.sign(msg).encode('base64')
 
     def validate(self, msg, sender, signature):
-        """Validate signature on message
-
-        Args:
-            msg (string)
-            sender_id (int)
-            signature (string)
-
-        Returns:
-            bool
-        """
-        # If we do not have the sender on file, look for their config file
         signature = signature.decode('base64')
         if sender not in self.vks:
             sender_config_filename = path.join(CONFIG_DIR, str(sender) + CONFIG_SUFFIX)
@@ -82,16 +116,17 @@ class SignatureService(object):
             return False
         return True
 
-# TEST CODE
 
-####
-# ss1 = SignatureService(1)
-# signature1 = ss1.sign("hello world")
-# print ss1.validate("hello world", 1, signature1)
+if __name__ == '__main__':
+    ss1 = RSASignatureService(1)
+    signature1 = ss1.sign("hello world")
+    assert ss1.validate("hello world", 1, signature1)
 
-# ss2 = SignatureService(2)
-# signature2 = ss2.sign("yellow red")
-# print ss1.validate("yellow red", 2, signature2)
-# print ss1.validate("yellow", 2, signature2)
-# print ss1.validate("yellow red", 2, signature1)
+    ss2 = RSASignatureService(2)
+    signature2 = ss2.sign("yellow red")
+    assert ss1.validate("yellow red", 2, signature2)
+    assert not ss1.validate("yellow", 2, signature2)
+    assert not ss1.validate("yellow red", 2, signature1)
+    assert ss2.validate("hello world", 2, signature1)
 
+    print "Passes"
