@@ -165,9 +165,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.user == 8:
         user = User(100)
-        num_calls = 50
-        timer = Timer(num_calls, "rsa")
+        num_calls = 200
+        login = False
+
+        name = CONSTANTS.SIGNATURE_SERVICE + '-' + str(CONSTANTS.N) + '-' + str(CONSTANTS.f) + '-' + str(num_calls)
+        if CONSTANTS.LAME_CLIENT:
+            name = 'lame' + '-' + str(num_calls)
+        if login:
+            name += '-login'
+        else:
+            name += '-enroll'
+
+        timer = Timer(num_calls, name)
         for i in xrange(num_calls):
-            user.enroll(str(i), "bdon", timer.call)
+            if login:
+                user.login(str(i), "bdon", timer.call)
+            else:
+                user.enroll(str(i), "bdon", timer.call)
     elif args.user == 7:
         client = ApplicationClient(None, 100)
