@@ -17,5 +17,5 @@ class Timer(object):
             total_time = end - self._start
             print "{} TOTAL TIME: {} {}".format(
                     "=" * 20, total_time, "=" * 20)
-            with open(filename, "w") as f:
+            with open(self._filename, "w") as f:
                 f.write(json.dumps(self._calls))
