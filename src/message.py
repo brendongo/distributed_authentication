@@ -420,6 +420,10 @@ class GetResponseMessage(Message):
         self.set_signature(signature_service, signature)
 
     @property
+    def key(self):
+        return self._get_msg.key
+
+    @property
     def get_msg(self):
         return self._get_msg
 
