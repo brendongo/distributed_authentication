@@ -94,7 +94,7 @@ class ECDSASignatureService(SignatureService):
         self.vks = {}
         for filename in listdir(CONFIG_DIR):
             if filename.endswith(CONFIG_SUFFIX):
-                other_server_id = int(filename[0])
+                other_server_id = int(filename[0:len(filename) - len(CONFIG_SUFFIX)])
                 with open(path.join(CONFIG_DIR, filename)) as config_file:
                     self.vks[other_server_id] = VerifyingKey.from_string(
                                                     config_file.read(VK_STR_LEN))
