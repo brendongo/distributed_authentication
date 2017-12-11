@@ -1,5 +1,5 @@
 import asyncore
-from signature_service import SignatureService
+from signature_service import get_signature_service
 from threshold_encryption_service import ThresholdEncryptionService
 from secrets_db import SecretsDB
 
@@ -20,7 +20,7 @@ class Server(object):
                 about servers, server id
         """
         self._id = uid
-        self._signature_service = SignatureService(uid)
+        self._signature_service = get_signature_service()(uid)
         self._threshold_encryption_service = ThresholdEncryptionService(
             'thenc8_2.keys', uid)
         self._secrets_db = SecretsDB('databases/secrets' + str(uid) + 'db')

@@ -2,6 +2,7 @@ from os import path, listdir
 from ecdsa import SigningKey, VerifyingKey, BadSignatureError
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
+from utils import CONSTANTS
 
 
 CONFIG_DIR = "config"
@@ -56,12 +57,24 @@ class RSASignatureService(SignatureService):
 
     def sign(self, msg):
         digest = SHA256.new(msg).digest()
-        signature = self.key.sign(digest, '')
-        return signature
+        signature = self.key.sign(digest, '')[0]
+        return str(signature)
 
     def validate(self, msg, sender, signature):
+        signature = (long(signature),)
         digest = SHA256.new(msg).digest()
         return self.key.publickey().verify(digest, signature)
+
+
+class NoSignatureService(SignatureService):
+    def __init__(self, server_id):
+        pass
+
+    def sign(self, msg):
+        return ""
+
+    def validate(self, msg, sender, signature):
+        return True
 
 
 class ECDSASignatureService(SignatureService):
@@ -116,6 +129,16 @@ class ECDSASignatureService(SignatureService):
             return False
         return True
 
+
+def get_signature_service():
+    if CONSTANTS.SIGNATURE_SERVICE == "rsa":
+        return RSASignatureService
+    elif CONSTANTS.SIGNATURE_SERVICE == "ecdsa":
+        return ECDSASignatureService
+    elif CONSTANTS.SIGNATURE_SERVICE == "none":
+        return NoSignatureService
+    else:
+        raise ValueError("Unsupported signature service")
 
 if __name__ == '__main__':
     ss1 = RSASignatureService(1)

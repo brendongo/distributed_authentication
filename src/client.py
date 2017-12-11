@@ -9,7 +9,7 @@ from message import LoginRequest
 from message import LoginResponse
 from message import EnrollRequest
 from message import EnrollResponse
-from signature_service import SignatureService
+from signature_service import get_signature_service
 from pake2plus.pake2plus import password_to_secret_A
 from pake2plus.pake2plus import SPAKE2PLUS_A
 from utils import CONSTANTS
@@ -20,7 +20,7 @@ class ApplicationClient(object):
     def __init__(self, server_ports, client_id):
         self._state_machines = {}
 
-        self._signature_service = SignatureService(client_id)
+        self._signature_service = get_signature_service()(client_id)
         self._id = client_id
 
         ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
