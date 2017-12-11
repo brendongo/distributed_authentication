@@ -25,7 +25,7 @@ class ApplicationClient(object):
 
         ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
                      port in xrange(8001, 8001 + CONSTANTS.N)]
-        ADDRESSES += [Address(7, 8001 + CONSTANTS.N, 'localhost', False)]
+        ADDRESSES += [Address(100, 8001 + CONSTANTS.N, 'localhost', False)]
         self._messaging_service = MessagingService(ADDRESSES, self)
         asyncore.loop()
 
@@ -93,11 +93,11 @@ class User(object):
 
     @property
     def id(self):
-        return 8
+        return 101
 
     @property
     def port(self):
-        return 8009
+        return 8102
 
     @property
     def hostname(self):
@@ -135,26 +135,16 @@ class User(object):
         if isinstance(msg, LoginResponse) or isinstance(msg, EnrollResponse):
             self._callbacks[(msg.username, msg.timestamp)](msg)
 
-        #if msg.type == "GET":
-        #    self._callbacks[msg.transaction_id](msg.value)
-        #else:
-        #    self._callbacks[msg.transaction_id]()
-
-
-def printo(msg):
-    print "Operation Successful, bitches"
-    print msg.to_json()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("user", type=int)
     args = parser.parse_args()
-    print args
     if args.user == 8:
-        user = User(7)
-        num_calls = 100
-        timer = Timer(num_calls)
+        user = User(100)
+        num_calls = 50
+        timer = Timer(num_calls, "rsa")
         for i in xrange(num_calls):
             user.enroll(str(i), "bdon", timer.call)
     elif args.user == 7:
-        client = ApplicationClient(None, 7)
+        client = ApplicationClient(None, 100)

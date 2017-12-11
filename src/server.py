@@ -32,7 +32,7 @@ class Server(object):
         from messaging_service import MessagingService, Address
         ADDRESSES = [Address(port - 8001, port, 'localhost', True) for
                      port in PORTS]
-        ADDRESSES += [Address(7, 8001 + CONSTANTS.N, 'localhost', False)]
+        ADDRESSES += [Address(100, 8101, 'localhost', False)]
         self._messaging_service = MessagingService(ADDRESSES, self)
         asyncore.loop()
 
