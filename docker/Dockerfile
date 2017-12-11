@@ -25,5 +25,6 @@ RUN cd charm && git checkout 2.7-dev && ./configure.sh && python setup.py instal
 RUN git clone https://github.com/amiller/HoneyBadgerBFT.git
 RUN cd HoneyBadgerBFT && git checkout another-dev
 RUN pip install pycrypto
+RUN apt-get -y install fabric
 COPY ./start.sh /
 CMD sh /start.sh ; sleep infinity
