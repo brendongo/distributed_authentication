@@ -8,6 +8,7 @@ class Timer(object):
         self._num_calls = num_calls
         self._start = time.time()
         self._calls = []
+        self._filename = filename
 
     def call(self, msg):
         self._num_calls -= 1
