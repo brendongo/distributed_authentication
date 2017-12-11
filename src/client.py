@@ -4,6 +4,7 @@ import message
 import socket
 import threading
 from state_machine import ClientGetStateMachine, ClientPutStateMachine
+from state_machine import LameClientGetStateMachine, LameClientPutStateMachine
 from messaging_service import MessagingService, Address
 from message import LoginRequest
 from message import LoginResponse
@@ -14,6 +15,7 @@ from pake2plus.pake2plus import password_to_secret_A
 from pake2plus.pake2plus import SPAKE2PLUS_A
 from utils import CONSTANTS
 from timer import Timer
+from lamedb import LameSecretsDB
 
 
 class ApplicationClient(object):
@@ -27,7 +29,14 @@ class ApplicationClient(object):
                      port in xrange(8001, 8001 + CONSTANTS.N)]
         ADDRESSES += [Address(100, 8001 + CONSTANTS.N, 'localhost', False)]
         self._messaging_service = MessagingService(ADDRESSES, self)
+
+        self._datastore = LameSecretsDB()
         asyncore.loop()
+
+
+    @property
+    def datastore(self):
+        return self._datastore
 
     @property
     def id(self):
@@ -57,6 +66,20 @@ class ApplicationClient(object):
         #if not msg.verify_signatures(self._signature_service):
         #    print "Welp, fuck"
         #    return
+
+        if CONSTANTS.LAME_CLIENT:
+            if isinstance(msg, message.LoginRequest):
+                key = (msg.username, msg.timestamp, "LOGIN")
+                state_machine = self._state_machines[key] = \
+                    LameClientGetStateMachine(msg, self)
+            elif isinstance(msg, message.EnrollRequest):
+                key = (msg.timestamp, "ENROLL")
+                state_machine = self._state_machines[key] = \
+                    LameClientPutStateMachine(msg, self)
+            else:
+                raise ValueError("Unhandled message: {}".format(msg))
+            return
+
 
         if isinstance(msg, message.LoginRequest):
             key = (msg.username, msg.timestamp, "LOGIN")

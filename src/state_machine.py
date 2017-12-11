@@ -10,6 +10,7 @@ from message import LoginRequest
 from message import LoginResponse
 from message import EnrollRequest
 from message import EnrollResponse
+from lamedb import LameSecretsDB
 from pake2plus.pake2plus import SPAKE2PLUS_B
 from pake2plus.pake2plus import password_to_secret_B
 from pake2plus.util import number_to_bytes, bytes_to_number
@@ -92,6 +93,57 @@ class ClientGetStateMachine(object):
                 self._server.messaging_service.send(
                         login_response, self._login_request.user_id)
                 self._sent = True
+
+
+class LameClientPutStateMachine(object):
+    def __init__(self, enroll_request, server):
+        self._responses = []
+        self._server = server
+        self._enroll_request = enroll_request
+
+        # Generate Serverside Pake2+ secret
+        pi_0, c = password_to_secret_B(enroll_request.password.encode('utf-8'))
+
+        pi_0_str = str(number_to_bytes(pi_0, 2 ** (256) - 1))
+        pi_0_str += c
+
+        server.datastore.put(enroll_request.username, pi_0_str)
+
+        enroll_response = EnrollResponse(
+            self._enroll_request.username,
+            self._enroll_request.timestamp)
+        self._server.messaging_service.send(
+            enroll_response, self._enroll_request.user_id)
+
+    def handle_message(self, message):
+        raise NotImplementedError
+
+
+class LameClientGetStateMachine(object):
+    def __init__(self, login_request, server):
+        self._responses = {}
+        self._server = server
+        self._login_request = login_request
+
+        value = server.datastore.get(login_request.username)
+
+        pi_0_str = value
+        pi_0 = bytes_to_number(pi_0_str[:32])
+        c = pi_0_str[32:]
+        encrypted = "lol"  # to check if keys are correct
+
+        SB = SPAKE2PLUS_B((pi_0, c))
+        v = SB.start()
+
+        key = SB.finish(self._login_request.u)
+        login_response = LoginResponse(
+            self._login_request.username, v,
+            encrypted, self._login_request.timestamp)
+        self._server.messaging_service.send(
+            login_response, self._login_request.user_id)
+
+    def handle_message(self, message):
+        raise NotImplementedError
 
 
 class PutStateMachine(object):
