@@ -138,9 +138,9 @@ class Socket(asyncore.dispatcher_with_send):
 
     def handle_read(self):
         """Receives data"""
-        data = self.recv(8196)
-        self._buffer.write_to(data)
         while True:
+            data = self.recv(65568)
+            self._buffer.write_to(data)
             msg = self._buffer.read_from()
             if msg is None:
                 return

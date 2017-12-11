@@ -588,7 +588,7 @@ class PutAcceptMessage(Message):
             json_obj["sender_id"], signature=json_obj["signature"])
 
     def __str__(self):
-        return "PutAcceptMessage ({})".format(self.key)
+        return "PutAcceptMessage ({}, {})".format(self.key, self.sender_id)
     __repr__ = __str__
 
 
@@ -644,7 +644,7 @@ class PutCompleteMessage(Message):
             json_obj["sender_id"], signature=json_obj["signature"])
 
     def __str__(self):
-        return "PutCompleteMessage ({})".format(self.key)
+        return "PutCompleteMessage ({}, {})".format(self.key, self.sender_id)
     __repr__ = __str__
 
 
