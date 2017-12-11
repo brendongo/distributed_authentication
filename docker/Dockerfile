@@ -24,5 +24,6 @@ RUN git clone https://github.com/JHUISI/charm.git
 RUN cd charm && git checkout 2.7-dev && ./configure.sh && python setup.py install
 RUN git clone https://github.com/amiller/HoneyBadgerBFT.git
 RUN cd HoneyBadgerBFT && git checkout another-dev
+RUN pip install pycrypto
 COPY ./start.sh /
 CMD sh /start.sh ; sleep infinity
