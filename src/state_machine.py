@@ -222,6 +222,9 @@ class GetStateMachine(object):
             client_msg (GetMessage): message that this is handling
             server (Server)
         """
+        if isinstance(client_msg, DecryptionShareMessage):
+            client_msg = client_msg.get_message
+
         assert isinstance(client_msg, GetMessage)
 
         self._sent_share = False

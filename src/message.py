@@ -349,6 +349,10 @@ class DecryptionShareMessage(Message):
         # TODO sign
 
     @property
+    def get_message(self):
+        return self._get_message
+
+    @property
     def decryption_share(self):
         return self._decryption_share
 
