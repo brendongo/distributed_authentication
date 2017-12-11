@@ -25,4 +25,5 @@ for domain in DOMAINS:
 plt.title("RSA vs ECDSA")
 plt.ylabel("Fulfilled Requests")
 plt.xlabel("Time (s)")
+plt.legend()
 fig.savefig("figure.pdf")
